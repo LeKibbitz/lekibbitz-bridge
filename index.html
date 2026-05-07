@@ -389,31 +389,54 @@
     margin-bottom: 10px;
   }
   .player-instructions strong { color: var(--ink); }
-  .hand {
-    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
-  }
   .card {
-    width: 68px; height: 100px; border-radius: 12px;
+    width: 76px; height: 110px; border-radius: 14px;
     background: white; border: 2px solid #d6dde8;
     display: flex; flex-direction: column; align-items: center; justify-content: space-between;
     padding: 8px 6px;
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    cursor: default;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
     box-shadow: var(--shadow-card);
     position: relative;
+    flex-shrink: 0;
   }
-  .card:hover { transform: translateY(-6px); box-shadow: 0 10px 22px rgba(31,58,95,0.18); }
-  .card.disabled { opacity: 0.45; cursor: not-allowed; }
-  .card.disabled:hover { transform: none; }
+  /* All cards always visible. Disabled = grey-out but not hidden, no movement. */
+  .card.disabled {
+    opacity: 0.55;
+    filter: grayscale(0.3);
+    cursor: not-allowed;
+    border-color: #e3e8f0;
+  }
+  /* Legal cards LIFT permanently to signal "you can play me", and lift further on hover. */
   .card.legal {
+    cursor: pointer;
     border-color: var(--accent-green);
-    box-shadow: 0 4px 10px rgba(123, 201, 111, 0.3);
+    transform: translateY(-12px);
+    box-shadow: 0 8px 18px rgba(123, 201, 111, 0.35), 0 2px 4px rgba(31,58,95,0.06);
+    animation: card-float 2.2s ease-in-out infinite;
+  }
+  .card.legal:hover {
+    transform: translateY(-20px) scale(1.04);
+    box-shadow: 0 14px 26px rgba(123, 201, 111, 0.45), 0 4px 8px rgba(31,58,95,0.1);
+    animation: none;
+  }
+  @keyframes card-float {
+    0%, 100% { transform: translateY(-12px); }
+    50%      { transform: translateY(-15px); }
   }
   .card .corner {
-    font: 700 22px 'Fredoka', sans-serif;
+    font: 700 24px 'Fredoka', sans-serif;
   }
   .card .pip {
-    width: 30px; height: 30px; border-radius: 50%;
+    width: 34px; height: 34px; border-radius: 50%;
+  }
+  /* Hand container: wrap if needed, generous gap so all cards always visible */
+  .hand {
+    display: flex; gap: 10px; justify-content: center;
+    flex-wrap: wrap;
+    padding: 18px 8px 10px;            /* extra top padding so lifted cards don't clip */
+    min-height: 130px;
+    align-items: flex-end;
   }
   .card[data-suit="red"]    .corner, .card[data-suit="red"] .pip    { color: var(--suit-red); background-color: var(--suit-red); }
   .card[data-suit="blue"]   .corner, .card[data-suit="blue"] .pip   { color: var(--suit-blue); background-color: var(--suit-blue); }
@@ -483,27 +506,49 @@
   /* End-of-deal recap diagram (4 hands shown classic bridge layout) */
   .recap {
     margin: 14px 24px 8px;
-    padding: 14px;
+    padding: 16px;
     background: #f5f8ff;
     border-radius: var(--radius-card);
   }
   .recap-title {
-    text-align: center; font: 700 13px 'Quicksand', sans-serif;
-    color: var(--ink-soft); margin: 0 0 10px;
-    text-transform: uppercase; letter-spacing: 0.05em;
+    text-align: center; font: 700 12px 'Quicksand', sans-serif;
+    color: var(--ink-soft); margin: 0 0 12px;
+    text-transform: uppercase; letter-spacing: 0.06em;
   }
   .recap-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: auto auto auto;
-    gap: 6px; align-items: center; justify-items: center;
+    gap: 10px; align-items: stretch; justify-items: center;
   }
-  .recap-hand { font: 600 11px 'Quicksand', sans-serif; color: var(--ink); text-align: center; }
-  .recap-hand .recap-seat { font-size: 10px; color: var(--ink-soft); margin-bottom: 2px; }
-  .recap-hand .recap-row { white-space: nowrap; }
+  .recap-hand {
+    font: 600 12px 'Quicksand', sans-serif; color: var(--ink);
+    background: white; border-radius: 10px;
+    padding: 8px 10px;
+    box-shadow: 0 2px 5px rgba(31, 58, 95, 0.06);
+    min-width: 90px;
+  }
+  .recap-hand .recap-seat {
+    font-size: 10px; color: var(--ink-soft);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    text-align: center; margin-bottom: 6px;
+    border-bottom: 1px solid #eef0f5; padding-bottom: 4px;
+  }
+  .recap-hand .recap-row {
+    display: grid;
+    grid-template-columns: 16px 1fr;
+    align-items: center; gap: 6px;
+    margin-top: 3px;
+  }
   .recap-hand .recap-row .pip-mini {
-    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-    vertical-align: middle; margin-right: 4px;
+    width: 12px; height: 12px; border-radius: 50%;
+    justify-self: center;
+  }
+  .recap-hand .recap-row .recap-ranks {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: 0.5px;
   }
   .recap-hand .recap-row[data-suit="red"]    .pip-mini { background: var(--suit-red); }
   .recap-hand .recap-row[data-suit="blue"]   .pip-mini { background: var(--suit-blue); }
@@ -513,6 +558,49 @@
   .recap-W { grid-column: 1; grid-row: 2; }
   .recap-E { grid-column: 3; grid-row: 2; }
   .recap-S { grid-column: 2; grid-row: 3; }
+
+  /* Trick-by-trick log */
+  .trick-log {
+    margin: 12px 0 0;
+    padding-top: 12px;
+    border-top: 1px dashed #d6dde8;
+  }
+  .trick-log-title {
+    text-align: center; font: 700 11px 'Quicksand', sans-serif;
+    color: var(--ink-soft); margin: 0 0 8px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .trick-row {
+    display: grid;
+    grid-template-columns: 36px repeat(4, 1fr) 24px;
+    gap: 6px; align-items: center;
+    padding: 4px 6px; border-radius: 6px;
+    font: 500 11px 'Quicksand', sans-serif;
+  }
+  .trick-row + .trick-row { margin-top: 2px; }
+  .trick-row.even { background: rgba(255,255,255,0.6); }
+  .trick-row .pli-num { font-weight: 700; color: var(--ink-soft); }
+  .trick-row .play-cell {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+  .trick-row .play-cell .seat-mini {
+    font-size: 9px; color: var(--ink-soft); width: 12px;
+  }
+  .trick-row .play-cell .pip-tiny {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .trick-row .play-cell .rk { font-weight: 700; color: var(--ink); }
+  .trick-row .play-cell.wins .rk { color: var(--accent-green); text-decoration: underline; }
+  .trick-row .play-cell[data-suit="red"]    .pip-tiny { background: var(--suit-red); }
+  .trick-row .play-cell[data-suit="blue"]   .pip-tiny { background: var(--suit-blue); }
+  .trick-row .play-cell[data-suit="green"]  .pip-tiny { background: var(--suit-green); }
+  .trick-row .play-cell[data-suit="yellow"] .pip-tiny { background: var(--suit-yellow); }
+  .trick-row .winner-flag {
+    font-size: 11px; text-align: center;
+    background: #eaf7e6; color: var(--accent-green);
+    border-radius: 6px; padding: 2px 4px; font-weight: 700;
+  }
 
   .optimum {
     margin: 6px 24px 0;
@@ -625,6 +713,10 @@
     <div class="recap" id="recap-win" style="display:none;">
       <p class="recap-title">Les 4 jeux de la donne</p>
       <div class="recap-grid" id="recap-grid-win"></div>
+      <div class="trick-log" id="trick-log-win">
+        <p class="trick-log-title">Déroulé des plis</p>
+        <div id="trick-rows-win"></div>
+      </div>
     </div>
     <div class="optimum" id="optimum-win" style="display:none;"></div>
     <div class="ctas">
@@ -655,6 +747,10 @@
     <div class="recap" id="recap-loss" style="display:none;">
       <p class="recap-title">Les 4 jeux de la donne</p>
       <div class="recap-grid" id="recap-grid-loss"></div>
+      <div class="trick-log" id="trick-log-loss">
+        <p class="trick-log-title">Déroulé des plis</p>
+        <div id="trick-rows-loss"></div>
+      </div>
     </div>
     <div class="optimum" id="optimum-loss" style="display:none;"></div>
     <div class="ctas">
@@ -742,10 +838,12 @@ function removeCard(hand, card) {
   const i = hand.findIndex(c => c.suit === card.suit && c.rank === card.rank);
   return [...hand.slice(0, i), ...hand.slice(i + 1)];
 }
-function startDeal({ deckSize, dealer, rng }) {
+function startDeal({ deckSize, dealer, declarer, rng }) {
+  declarer = declarer || 'S';                   // default: human is the declarer
   const hands = dealCards(shuffle(buildDeck(deckSize), rng), dealer);
-  const dummy = nextSeat(dealer);
-  // Snapshot initial hands so we can show the recap diagram at the end of the deal.
+  // Classic bridge: dummy = declarer's partner; opening leader = left of declarer.
+  const dummy = partnerOf(declarer);
+  const openingLeader = nextSeat(declarer);
   const initialHands = {
     N: [...hands.N], E: [...hands.E], S: [...hands.S], W: [...hands.W],
   };
@@ -755,13 +853,13 @@ function startDeal({ deckSize, dealer, rng }) {
     hands,
     initialHands,
     dealer,
-    declarer: dealer,
+    declarer,
     dummy,
     phase: 'opening',
-    currentTrick: { index: 0, plays: [], leader: dealer, leadSuit: null },
+    currentTrick: { index: 0, plays: [], leader: openingLeader, leadSuit: null },
     completedTricks: [],
     tricksWon: { NS: 0, EW: 0 },
-    nextToPlay: dealer,
+    nextToPlay: openingLeader,
   };
 }
 function applyPlay(deal, play) {
@@ -874,9 +972,15 @@ document.getElementById('btn-retry').addEventListener('click', () => { startNewD
 document.getElementById('btn-back-home').addEventListener('click', () => showScreen('home'));
 
 function startNewDeal() {
-  state = startDeal({ deckSize: chosenDeckSize, dealer: 'S' });
+  state = startDeal({ deckSize: chosenDeckSize, dealer: 'S', declarer: 'S' });
   // No first-trick branching anymore — deal plays out fully.
+  // Hide recap blocks from a previous deal.
+  ['recap-win','recap-loss','optimum-win','optimum-loss'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   render();
+  // West opens the lead automatically (it's an AI seat).
+  scheduleNext();
 }
 
 function showToast(msg, ms = 1400) {
@@ -1047,7 +1151,12 @@ function render() {
       inst.innerHTML = "<strong>À toi d'entamer !</strong> Choisis une carte de ta main.";
     }
   } else if (isDummyTurn) {
-    inst.innerHTML = '<strong>À toi de jouer pour Nord (le mort)</strong> · couleur demandée : <span style="color: var(--suit-' + state.currentTrick.leadSuit + '); font-weight: 700;">●</span>';
+    var firstDummyTurn = state.completedTricks.length === 0 && state.currentTrick.plays.length === 1;
+    if (firstDummyTurn) {
+      inst.innerHTML = '<strong>Le mort vient de s\'étaler.</strong> Prends ton temps : observe les deux jeux, puis joue la 1<sup>ère</sup> carte de Nord. Couleur demandée : <span style="color: var(--suit-' + state.currentTrick.leadSuit + '); font-weight: 700;">●</span>';
+    } else {
+      inst.innerHTML = '<strong>À toi de jouer pour Nord (le mort)</strong> · couleur demandée : <span style="color: var(--suit-' + state.currentTrick.leadSuit + '); font-weight: 700;">●</span>';
+    }
   } else {
     var seatLabel = state.nextToPlay === 'E' ? 'Est' : state.nextToPlay === 'W' ? 'Ouest' : state.nextToPlay;
     inst.innerHTML = '<em style="color: var(--ink-soft)">' + seatLabel + ' réfléchit…</em>';
@@ -1137,11 +1246,44 @@ function renderRecapDiagram(gridEl) {
     var suitOrder = ['red', 'yellow', 'green', 'blue'];
     for (var k = 0; k < suitOrder.length; k++) {
       var suit = suitOrder[k];
-      if (bySuit[suit].length === 0) continue;
-      html += '<div class="recap-row" data-suit="' + suit + '"><span class="pip-mini"></span>' + bySuit[suit].join(' ') + '</div>';
+      // Always render all 4 suits (even empty) for perfect alignment across hands
+      var ranks = bySuit[suit].length > 0 ? bySuit[suit].join(' ') : '—';
+      html += '<div class="recap-row" data-suit="' + suit + '"><span class="pip-mini"></span><span class="recap-ranks">' + ranks + '</span></div>';
     }
     box.innerHTML = html;
     gridEl.appendChild(box);
+  }
+}
+
+function renderTrickLog(rowsEl) {
+  rowsEl.innerHTML = '';
+  var seatOrder = ['W', 'N', 'E', 'S']; // trick play order is leader-first; we display by SEAT to keep columns aligned
+  for (var t = 0; t < state.completedTricks.length; t++) {
+    var trick = state.completedTricks[t];
+    var bySeat = {};
+    for (var p = 0; p < trick.plays.length; p++) {
+      bySeat[trick.plays[p].seat] = trick.plays[p].card;
+    }
+    var row = document.createElement('div');
+    row.className = 'trick-row' + (t % 2 === 1 ? ' even' : '');
+    var html = '<span class="pli-num">P' + (t + 1) + '</span>';
+    for (var so = 0; so < seatOrder.length; so++) {
+      var seat = seatOrder[so];
+      var card = bySeat[seat];
+      var winsClass = seat === trick.winner ? ' wins' : '';
+      if (card) {
+        html += '<span class="play-cell' + winsClass + '" data-suit="' + card.suit + '">' +
+                '<span class="seat-mini">' + seat + '</span>' +
+                '<span class="pip-tiny"></span>' +
+                '<span class="rk">' + card.rank + '</span></span>';
+      } else {
+        html += '<span class="play-cell"></span>';
+      }
+    }
+    var teamWin = teamOf(trick.winner) === 'NS' ? 'Toi' : 'Adv';
+    html += '<span class="winner-flag" title="' + trick.winner + '">' + teamWin + '</span>';
+    row.innerHTML = html;
+    rowsEl.appendChild(row);
   }
 }
 
@@ -1259,10 +1401,11 @@ function showWinScreen(out) {
       ? 'Bravo !<br/>Donne gagnée !'
       : 'Bien joué !<br/>Donne remportée !';
   }
-  // Recap diagram + optimum
+  // Recap diagram + trick log + optimum
   var recap = document.getElementById('recap-win');
   recap.style.display = 'block';
   renderRecapDiagram(document.getElementById('recap-grid-win'));
+  renderTrickLog(document.getElementById('trick-rows-win'));
   showScreen('win');
   if (window.confetti) {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.4 }, colors: ['#ff6b3d', '#4a90ff', '#7bc96f', '#ffc83d', '#ff8db3'] });
@@ -1276,6 +1419,7 @@ function showLossScreen(out) {
   var recap = document.getElementById('recap-loss');
   recap.style.display = 'block';
   renderRecapDiagram(document.getElementById('recap-grid-loss'));
+  renderTrickLog(document.getElementById('trick-rows-loss'));
   showScreen('loss');
   showOptimumLine(out, document.getElementById('optimum-loss'));
 }

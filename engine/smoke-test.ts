@@ -50,9 +50,9 @@ let deal = startDeal({ deckSize: 16, dealer: 'S', rng });
 
 assert(deal.cardsPerHand === 4, 'Each hand has 4 cards (16-card deck)');
 assert(deal.dealer === 'S', 'South is the dealer');
-assert(deal.declarer === 'S', 'Dealer is also declarer');
-assert(deal.dummy === 'W', 'Dummy is left of dealer (West)');
-assert(deal.nextToPlay === 'S', 'South opens the lead');
+assert(deal.declarer === 'S', 'Declarer defaults to South');
+assert(deal.dummy === 'N', "Dummy is declarer's partner (North)");
+assert(deal.nextToPlay === 'W', 'Opening lead is by left-of-declarer (West)');
 assert(deal.phase === 'opening', "Phase is 'opening'");
 assert(
   deal.hands.N.length + deal.hands.E.length + deal.hands.S.length + deal.hands.W.length === 16,
@@ -142,7 +142,7 @@ assert(
 console.log('\n6. 40-card deal still works');
 const big = startDeal({ deckSize: 40, dealer: 'N', rng: mulberry32(7) });
 assert(big.cardsPerHand === 10, '40-card deck → 10 cards per hand');
-assert(big.dummy === 'E', '40-card: dummy is East when dealer is North');
+assert(big.dummy === 'N', "40-card: dummy is declarer's partner (default S → N)");
 
 console.log(`\n=== ${testsRun - testsFailed}/${testsRun} passed ===`);
 if (testsFailed > 0) {
