@@ -646,6 +646,19 @@ function chooseCard(deal, difficulty = 'fair') {
   return beats.length > 0 ? lowest(beats) : lowest(cands);
 }
 
+function dealOutcome(deal) {
+  var ns = deal.tricksWon.NS, ew = deal.tricksWon.EW;
+  var winner = ns > ew ? 'NS' : ew > ns ? 'EW' : 'tie';
+  var firstTrick = deal.completedTricks[0];
+  return {
+    tricksNS: ns,
+    tricksEW: ew,
+    winner: winner,
+    declarerWon: winner === teamOf(deal.declarer),
+    firstTrickWonBy: firstTrick ? teamOf(firstTrick.winner) : null,
+  };
+}
+
 /* =========================================================================
    UI controller
    ========================================================================= */
