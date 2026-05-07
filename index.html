@@ -278,6 +278,20 @@
   .trick .placed.N { left: 36px; top: 0; }
   .trick .placed.W { left: 0; top: 28px; }
   .trick .placed.E { right: 0; top: 28px; }
+  .trick .placed.winner {
+    box-shadow: 0 0 0 3px var(--accent-green), 0 6px 18px rgba(123, 201, 111, 0.55);
+    animation: pulse-win 0.9s ease-in-out infinite;
+    z-index: 2;
+  }
+  @keyframes pulse-win {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50%      { transform: translateY(-2px) scale(1.12); }
+  }
+  .trick-counter {
+    position: absolute; top: 8px; right: 12px;
+    font: 700 11px 'Quicksand', sans-serif; color: var(--ink-soft);
+    background: rgba(255, 255, 255, 0.7); border-radius: 8px; padding: 3px 8px;
+  }
 
   .badge {
     display: inline-block; padding: 2px 10px; border-radius: 12px;
@@ -651,7 +665,7 @@ function showScreen(name) {
 let state = null; // current Deal
 let chosenDeckSize = 16;
 let aiDelayMs = 600;
-let firstTrickResolvedFor = null; // 'NS' | 'EW' once first trick is done
+// (removed firstTrickResolvedFor — now we always play the full deal)
 
 // Deck picker
 document.querySelectorAll('.deck-pick').forEach(btn => {
@@ -677,7 +691,7 @@ document.getElementById('btn-back-home').addEventListener('click', () => showScr
 
 function startNewDeal() {
   state = startDeal({ deckSize: chosenDeckSize, dealer: 'S' });
-  firstTrickResolvedFor = null;
+  // No first-trick branching anymore — deal plays out fully.
   render();
 }
 
@@ -700,15 +714,32 @@ function render() {
     }
   }
 
-  // Trick zone
+  // Trick zone — during trick_won we show the LAST completed trick (4 cards visible)
+  // with the winning card highlighted, so the user actually sees what just happened.
   const trickEl = document.getElementById('trick');
   trickEl.innerHTML = '';
-  for (const p of state.currentTrick.plays) {
+  var playsToShow = state.currentTrick.plays;
+  var winnerSeat = null;
+  if (state.phase === 'trick_won' && state.completedTricks.length > 0) {
+    var lastCompleted = state.completedTricks[state.completedTricks.length - 1];
+    playsToShow = lastCompleted.plays;
+    winnerSeat = lastCompleted.winner;
+  }
+  for (const p of playsToShow) {
     const c = document.createElement('div');
-    c.className = 'placed ' + p.seat;
+    c.className = 'placed ' + p.seat + (p.seat === winnerSeat ? ' winner' : '');
     c.dataset.suit = p.card.suit;
     c.textContent = p.card.rank;
     trickEl.appendChild(c);
+  }
+  // Trick counter (Pli X / Y)
+  const totalTricks = state.cardsPerHand;
+  const currentTrickNum = state.completedTricks.length + (state.phase === 'trick_won' ? 0 : 1);
+  if (state.phase !== 'completed') {
+    const counter = document.createElement('div');
+    counter.className = 'trick-counter';
+    counter.textContent = 'Pli ' + Math.min(currentTrickNum, totalTricks) + ' / ' + totalTricks;
+    trickEl.appendChild(counter);
   }
 
   // Player hand (S)
@@ -747,11 +778,14 @@ function render() {
   // Instructions
   const inst = document.getElementById('player-instructions');
   if (state.phase === 'completed') {
-    inst.innerHTML = `<strong>Donne terminée !</strong> NS=${state.tricksWon.NS} · EW=${state.tricksWon.EW}`;
+    inst.innerHTML = '<strong>Donne terminée !</strong> Toi ' + state.tricksWon.NS + ' · Adversaires ' + state.tricksWon.EW;
   } else if (state.phase === 'trick_won') {
     var lastTrick = state.completedTricks[state.completedTricks.length - 1];
-    var winnerLabel = teamOf(lastTrick.winner) === 'NS' ? 'TON équipe' : "l'adversaire";
-    inst.innerHTML = '<strong>Pli pour ' + winnerLabel + '</strong>';
+    var winnerLabel = teamOf(lastTrick.winner) === 'NS'
+      ? 'TON équipe gagne ce pli !'
+      : "l'adversaire gagne ce pli";
+    var winnerCard = lastTrick.plays.find(function(p){return p.seat===lastTrick.winner;}).card;
+    inst.innerHTML = '<strong>' + winnerLabel + '</strong> &middot; carte la plus haute (' + winnerCard.rank + ')';
   } else if (isPlayerTurn) {
     if (state.currentTrick.leadSuit) {
       inst.innerHTML = `<strong>À toi !</strong> Couleur demandée&nbsp;: <span style="color: var(--suit-${state.currentTrick.leadSuit}); font-weight: 700;">●</span>`;
@@ -770,30 +804,23 @@ function humanPlay(card) {
 }
 
 function scheduleNext() {
+  // Trick complete: show 4 cards + winner highlight for 2s, then continue the deal.
   if (state.phase === 'trick_won') {
-    // First trick — branch to win/loss screens.
-    if (firstTrickResolvedFor === null) {
-      const trick = state.completedTricks[0];
-      firstTrickResolvedFor = teamOf(trick.winner);
-      setTimeout(() => {
-        if (firstTrickResolvedFor === 'NS') showWinScreen(trick);
-        else showLossScreen(trick);
-      }, 700);
-      return;
-    }
-    // Subsequent tricks — continue play
-    setTimeout(() => {
+    setTimeout(function () {
       state = { ...state, phase: 'playing' };
       render();
       scheduleNext();
-    }, 800);
+    }, 2000);
     return;
   }
+  // Deal complete: show the final outcome screen after a short pause.
   if (state.phase === 'completed') {
+    setTimeout(showDealEndScreen, 900);
     return;
   }
+  // AI turn — let the user see what just happened, then play.
   if (state.nextToPlay !== 'S') {
-    setTimeout(() => {
+    setTimeout(function () {
       const card = chooseCard(state, 'fair');
       state = applyPlay(state, { seat: state.nextToPlay, card });
       render();
@@ -802,34 +829,52 @@ function scheduleNext() {
   }
 }
 
-function describeTrick(trick) {
-  const winnerCard = trick.plays.find(p => p.seat === trick.winner).card;
-  const yourCard = trick.plays.find(p => p.seat === 'S')?.card;
-  if (teamOf(trick.winner) === 'NS') {
-    if (trick.winner === 'S') {
-      return `Tu as posé le ${winnerCard.rank}, la plus forte de la couleur demandée.`;
-    }
-    return `Ton partenaire (Nord) a posé le ${winnerCard.rank} : pli gagné en équipe !`;
+function describeDealOutcome(out) {
+  var ns = out.tricksNS, ew = out.tricksEW;
+  var firstTrick = state.completedTricks[0];
+  var firstNote = firstTrick && teamOf(firstTrick.winner) === 'NS'
+    ? ' Et tu as gagné ton tout premier pli !'
+    : '';
+  if (out.winner === 'NS') {
+    return 'Toi ' + ns + ' · Adversaires ' + ew + '.' + firstNote;
+  }
+  if (out.winner === 'tie') {
+    return 'Égalité ' + ns + '–' + ew + '. Beau combat !' + firstNote;
+  }
+  return 'Toi ' + ns + ' · Adversaires ' + ew + '. Pas grave, on retente ?';
+}
+
+function showDealEndScreen() {
+  if (state.phase !== 'completed') return;
+  var out = dealOutcome(state);
+  // Toi gagne ou égalité positive (au moins 1 pli) → écran Bravo
+  if (out.winner === 'NS' || (out.winner === 'tie' && out.tricksNS >= 1)) {
+    showWinScreen(out);
   } else {
-    if (yourCard) {
-      return `Ton ${yourCard.rank} a été coiffé par le ${winnerCard.rank} adverse. La règle : la plus forte carte de la couleur demandée gagne.`;
-    }
-    return `L'adversaire a pris le pli avec le ${winnerCard.rank}.`;
+    showLossScreen(out);
   }
 }
 
-function showWinScreen(trick) {
-  document.getElementById('win-summary').textContent = describeTrick(trick);
+function showWinScreen(out) {
+  document.getElementById('win-summary').textContent = describeDealOutcome(out);
+  // Adapt heading based on whether the first trick was won
+  var firstTrick = state.completedTricks[0];
+  var firstWonByPlayer = firstTrick && teamOf(firstTrick.winner) === 'NS';
+  var headEl = document.querySelector('#screen-win .head-line');
+  if (headEl) {
+    headEl.innerHTML = firstWonByPlayer
+      ? 'Bravo !<br/>Donne gagnée !'
+      : 'Bien joué !<br/>Donne remportée !';
+  }
   showScreen('win');
-  // Confetti burst
   if (window.confetti) {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.4 }, colors: ['#ff6b3d', '#4a90ff', '#7bc96f', '#ffc83d', '#ff8db3'] });
-    setTimeout(() => confetti({ particleCount: 60, spread: 100, angle: 60, origin: { x: 0, y: 0.5 } }), 220);
-    setTimeout(() => confetti({ particleCount: 60, spread: 100, angle: 120, origin: { x: 1, y: 0.5 } }), 380);
+    setTimeout(function(){ confetti({ particleCount: 60, spread: 100, angle: 60, origin: { x: 0, y: 0.5 } }); }, 220);
+    setTimeout(function(){ confetti({ particleCount: 60, spread: 100, angle: 120, origin: { x: 1, y: 0.5 } }); }, 380);
   }
 }
-function showLossScreen(trick) {
-  document.getElementById('loss-summary').textContent = describeTrick(trick);
+function showLossScreen(out) {
+  document.getElementById('loss-summary').textContent = describeDealOutcome(out);
   showScreen('loss');
 }
 
