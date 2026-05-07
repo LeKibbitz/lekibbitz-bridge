@@ -1,0 +1,15 @@
+{
+  "name": "@lekibbitz/bridge-engine",
+  "version": "0.1.0",
+  "description": "Petit Bridge game engine — pure TypeScript, UI-agnostic.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsx engine/smoke-test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

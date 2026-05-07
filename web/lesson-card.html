@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lekibbitz Bridge — Ton premier pli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+  :root {
+    --brand-orange: #ff6b3d;
+    --brand-navy: #1f3a5f;
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --ink: #1f3a5f;
+    --ink-soft: #5a6c84;
+    --accent-blue: #4a90ff;
+    --accent-green: #7bc96f;
+    --accent-yellow: #ffd24a;
+    --accent-pink: #ff8db3;
+    --suit-red: #ff6b6b;
+    --suit-blue: #4a90ff;
+    --suit-green: #7bc96f;
+    --suit-yellow: #ffc83d;
+    --shadow-card: 0 6px 14px rgba(31, 58, 95, 0.08), 0 2px 4px rgba(31, 58, 95, 0.04);
+    --shadow-floating: 0 14px 30px rgba(31, 58, 95, 0.18);
+    --radius-card: 22px;
+    --radius-pill: 36px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Quicksand', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* App shell — phone-like frame on big screens, full-bleed on phones */
+  .app {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border-radius: 32px;
+    box-shadow: var(--shadow-floating);
+    overflow: hidden;
+    position: relative;
+    min-height: 720px;
+    display: flex;
+    flex-direction: column;
+  }
+  @media (max-width: 480px) {
+    body { padding: 0; }
+    .app { border-radius: 0; min-height: 100vh; box-shadow: none; }
+  }
+
+  /* Header bar */
+  .brand {
+    text-align: center;
+    padding: 18px 20px 10px;
+  }
+  .brand-name {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    color: var(--brand-orange);
+    line-height: 1;
+  }
+  .brand-sub {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: var(--brand-navy);
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 18px 4px; font-size: 13px; color: var(--ink-soft);
+  }
+  .topbar .clock { font-weight: 600; }
+  .back-btn {
+    border: none; background: transparent; font-size: 22px; color: var(--ink); cursor: pointer; padding: 4px 8px;
+  }
+  .lesson-tag {
+    text-align: center; font-weight: 600; color: var(--ink); font-size: 14px;
+    padding: 4px 0 12px;
+  }
+
+  /* Main scene — confetti band */
+  .scene {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 8px 24px 0;
+    position: relative;
+  }
+  .confetti-band {
+    width: 100%; height: 130px;
+    background:
+      radial-gradient(circle at 12% 40%, var(--accent-pink) 0 6px, transparent 7px),
+      radial-gradient(circle at 88% 30%, var(--accent-yellow) 0 5px, transparent 6px),
+      radial-gradient(circle at 22% 78%, var(--accent-green) 0 7px, transparent 8px),
+      radial-gradient(circle at 70% 70%, var(--accent-blue) 0 5px, transparent 6px),
+      radial-gradient(circle at 50% 20%, var(--accent-pink) 0 4px, transparent 5px),
+      linear-gradient(135deg, #ffe7d6, #fff4e0);
+    border-radius: var(--radius-card);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 4px;
+  }
+
+  /* The mascot card (smiling card) */
+  .mascot {
+    width: 86px; height: 110px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 6px 14px rgba(31, 58, 95, 0.18);
+    position: relative;
+    transform: rotate(-6deg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .mascot::before, .mascot::after {
+    /* tiny eyes */
+    content: ''; position: absolute; width: 10px; height: 10px;
+    background: var(--ink); border-radius: 50%;
+    top: 38px;
+  }
+  .mascot::before { left: 22px; }
+  .mascot::after  { right: 22px; }
+  .mascot .smile {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    width: 30px; height: 16px; border-bottom: 3px solid var(--ink);
+    border-radius: 0 0 30px 30px;
+  }
+  .mascot .blush {
+    position: absolute; width: 8px; height: 6px; background: var(--suit-red); border-radius: 50%;
+    top: 56px; opacity: 0.55;
+  }
+  .mascot .blush.left  { left: 12px; }
+  .mascot .blush.right { right: 12px; }
+  .mascot .arm {
+    position: absolute; width: 12px; height: 24px; background: white;
+    border: 2px solid var(--ink); border-radius: 12px;
+    top: 18px; right: -12px; transform: rotate(-30deg);
+    z-index: 2;
+  }
+  .mascot .arm::after {
+    content: ''; position: absolute; width: 14px; height: 14px;
+    background: white; border: 2px solid var(--ink); border-radius: 50%;
+    top: -10px; left: -3px;
+  }
+
+  /* Stars row */
+  .stars {
+    display: flex; gap: 8px; justify-content: center; margin-top: 14px; height: 28px;
+  }
+  .stars .star {
+    width: 28px; height: 28px;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    background: var(--accent-yellow);
+    transform: scale(0);
+    animation: pop 0.4s ease-out forwards;
+  }
+  .stars .star:nth-child(1) { animation-delay: 0.1s; }
+  .stars .star:nth-child(2) { animation-delay: 0.25s; transform: scale(0) translateY(-4px); }
+  .stars .star:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pop { to { transform: scale(1); } }
+
+  .head-line {
+    text-align: center;
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 1.15;
+    color: var(--ink);
+    margin: 22px 0 6px;
+  }
+  .sub-line {
+    text-align: center; color: var(--ink-soft); font-weight: 500; font-size: 15px; margin: 0 0 18px;
+  }
+
+  /* CTAs — pill stack */
+  .ctas {
+    width: 100%; padding: 8px 24px 24px;
+    display: flex; flex-direction: column; gap: 12px;
+    margin-top: auto;
+  }
+  .btn {
+    width: 100%; height: 52px; border-radius: var(--radius-pill);
+    border: 0; cursor: pointer; font: 600 16px 'Quicksand', sans-serif;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--accent-blue); color: white;
+    box-shadow: 0 4px 0 #3973d6, 0 6px 14px rgba(74, 144, 255, 0.3);
+  }
+  .btn-secondary {
+    background: white; color: var(--ink);
+    border: 2px solid #e3e8f0;
+  }
+
+  /* Game scene */
+  .game {
+    flex: 1; display: flex; flex-direction: column; padding: 6px 18px 18px;
+  }
+  .table {
+    flex: 1;
+    background: linear-gradient(160deg, #f5f8ff, #eef3ff);
+    border-radius: var(--radius-card);
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+    min-height: 360px;
+  }
+  .seat {
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    color: var(--ink-soft); font-size: 12px; font-weight: 600;
+  }
+  .seat-N { grid-column: 2; grid-row: 1; }
+  .seat-W { grid-column: 1; grid-row: 2; }
+  .seat-E { grid-column: 3; grid-row: 2; }
+  .seat-S { grid-column: 2; grid-row: 3; }
+  .center { grid-column: 2; grid-row: 2; display: flex; align-items: center; justify-content: center; }
+  .seat-label { margin-bottom: 4px; }
+  .seat-label.dummy { color: var(--brand-orange); }
+  .hand-back {
+    display: flex; gap: -4px;
+  }
+  .card-back {
+    width: 22px; height: 32px;
+    background: repeating-linear-gradient(45deg, var(--brand-navy), var(--brand-navy) 4px, #2a4d7a 4px, #2a4d7a 8px);
+    border: 1.5px solid white; border-radius: 4px;
+    margin-left: -10px;
+  }
+  .card-back:first-child { margin-left: 0; }
+
+  .dummy-hand {
+    display: flex; gap: 6px;
+  }
+  .dummy-suit {
+    display: flex; flex-direction: column; gap: -8px;
+  }
+  .mini-card {
+    width: 22px; height: 30px;
+    border-radius: 4px;
+    background: white;
+    border: 1px solid #d6dde8;
+    display: flex; align-items: center; justify-content: center;
+    font: 600 12px 'Fredoka', sans-serif;
+    margin-top: -16px;
+  }
+  .mini-card:first-child { margin-top: 0; }
+
+  /* The trick zone in the center */
+  .trick {
+    position: relative; width: 110px; height: 110px;
+  }
+  .trick .placed {
+    position: absolute; width: 38px; height: 54px;
+    border-radius: 6px; background: white;
+    border: 1.5px solid #d6dde8;
+    display: flex; align-items: center; justify-content: center;
+    font: 700 16px 'Fredoka', sans-serif;
+    box-shadow: 0 2px 6px rgba(31, 58, 95, 0.12);
+  }
+  .trick .placed.S { left: 36px; bottom: 0; }
+  .trick .placed.N { left: 36px; top: 0; }
+  .trick .placed.W { left: 0; top: 28px; }
+  .trick .placed.E { right: 0; top: 28px; }
+
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  }
+  .badge.dummy { background: #fff1e8; color: var(--brand-orange); }
+
+  /* Player hand at bottom */
+  .player-zone {
+    margin-top: 14px;
+  }
+  .player-instructions {
+    text-align: center; color: var(--ink-soft); font-size: 13px; font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .player-instructions strong { color: var(--ink); }
+  .hand {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  }
+  .card {
+    width: 56px; height: 84px; border-radius: 10px;
+    background: white; border: 2px solid #d6dde8;
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: 6px 4px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    box-shadow: var(--shadow-card);
+    position: relative;
+  }
+  .card:hover { transform: translateY(-6px); }
+  .card.disabled { opacity: 0.45; cursor: not-allowed; }
+  .card.disabled:hover { transform: none; }
+  .card.legal { border-color: var(--accent-green); }
+  .card .corner {
+    font: 700 18px 'Fredoka', sans-serif;
+  }
+  .card .pip {
+    width: 24px; height: 24px; border-radius: 50%;
+  }
+  .card[data-suit="red"]    .corner, .card[data-suit="red"] .pip    { color: var(--suit-red); background-color: var(--suit-red); }
+  .card[data-suit="blue"]   .corner, .card[data-suit="blue"] .pip   { color: var(--suit-blue); background-color: var(--suit-blue); }
+  .card[data-suit="green"]  .corner, .card[data-suit="green"] .pip  { color: var(--suit-green); background-color: var(--suit-green); }
+  .card[data-suit="yellow"] .corner, .card[data-suit="yellow"] .pip { color: var(--suit-yellow); background-color: var(--suit-yellow); }
+  .card .corner { background: transparent !important; }
+
+  /* Mini cards in trick / dummy: tinted by suit */
+  .placed[data-suit="red"]    { color: var(--suit-red); }
+  .placed[data-suit="blue"]   { color: var(--suit-blue); }
+  .placed[data-suit="green"]  { color: var(--suit-green); }
+  .placed[data-suit="yellow"] { color: var(--suit-yellow); }
+  .mini-card[data-suit="red"]    { color: var(--suit-red); }
+  .mini-card[data-suit="blue"]   { color: var(--suit-blue); }
+  .mini-card[data-suit="green"]  { color: var(--suit-green); }
+  .mini-card[data-suit="yellow"] { color: var(--suit-yellow); }
+
+  .toast {
+    position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: white; padding: 10px 18px; border-radius: 24px;
+    font-weight: 600; font-size: 14px; box-shadow: var(--shadow-floating);
+    opacity: 0; transition: opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Screens */
+  .screen { display: none; flex: 1; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* Home screen */
+  .home {
+    padding: 12px 24px 24px; gap: 14px; align-items: center; text-align: center;
+  }
+  .home h2 { font-family: 'Fredoka', sans-serif; font-weight: 700; color: var(--ink); margin: 8px 0 4px; }
+  .home p  { color: var(--ink-soft); margin: 0 0 8px; line-height: 1.4; }
+  .deck-picker { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 4px 0 12px; }
+  .deck-pick {
+    border: 2px solid #e3e8f0; background: white; color: var(--ink);
+    padding: 8px 14px; border-radius: 18px; font: 600 14px 'Quicksand', sans-serif; cursor: pointer;
+  }
+  .deck-pick.active { border-color: var(--accent-blue); background: #eaf2ff; color: var(--accent-blue); }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- HEADER (always shown) -->
+  <div class="brand">
+    <div class="brand-name">Lekibbitz</div>
+    <div class="brand-sub">Bridge</div>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div class="screen home active" id="screen-home">
+    <h2>Bienvenue !</h2>
+    <p>Tu vas apprendre le bridge en jouant.<br/>On commence par <strong>ton tout premier pli</strong>.</p>
+    <div>
+      <p style="margin-bottom: 6px; font-size: 14px;">Choisis ton niveau&nbsp;:</p>
+      <div class="deck-picker" id="deck-picker">
+        <button class="deck-pick active" data-deck="16">Tout petit (16 cartes)</button>
+        <button class="deck-pick" data-deck="24">Petit (24 cartes)</button>
+        <button class="deck-pick" data-deck="40">Standard (40 cartes)</button>
+      </div>
+    </div>
+    <div class="ctas" style="margin-top: 0;">
+      <button class="btn btn-primary" id="btn-start">Commencer</button>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen" id="screen-game">
+    <div class="topbar">
+      <button class="back-btn" id="btn-quit">‹</button>
+      <span class="clock">9:41</span>
+      <span style="width: 40px;"></span>
+    </div>
+    <div class="lesson-tag">Lesson card</div>
+    <div class="game">
+      <div class="table">
+        <div class="seat seat-N">
+          <span class="seat-label">Nord (partenaire)</span>
+          <div class="hand-back" id="hand-N"></div>
+        </div>
+        <div class="seat seat-W">
+          <span class="seat-label">Ouest</span>
+          <div class="hand-back" id="hand-W"></div>
+        </div>
+        <div class="center">
+          <div class="trick" id="trick"></div>
+        </div>
+        <div class="seat seat-E">
+          <span class="seat-label">Est</span>
+          <div class="hand-back" id="hand-E"></div>
+        </div>
+        <div class="seat seat-S">
+          <span class="seat-label">Toi (Sud)</span>
+        </div>
+      </div>
+
+      <div class="player-zone">
+        <div class="player-instructions" id="player-instructions">
+          <strong>À toi !</strong> Joue une carte.
+        </div>
+        <div class="hand" id="hand-S"></div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <!-- BRAVO SCREEN (matches the mockup) -->
+  <div class="screen" id="screen-win">
+    <div class="topbar">
+      <button class="back-btn" id="btn-back-from-win">‹</button>
+      <span class="clock">9:41</span>
+      <span style="width: 40px;"></span>
+    </div>
+    <div class="lesson-tag">Lesson card</div>
+    <div class="scene">
+      <div class="confetti-band">
+        <div class="mascot">
+          <div class="smile"></div>
+          <div class="blush left"></div>
+          <div class="blush right"></div>
+          <div class="arm"></div>
+        </div>
+      </div>
+      <div class="stars">
+        <div class="star"></div>
+        <div class="star"></div>
+        <div class="star"></div>
+      </div>
+      <h1 class="head-line">Bravo !<br/>Ton premier pli !</h1>
+      <p class="sub-line" id="win-summary">Tu as gagné le pli avec ta carte la plus forte.</p>
+    </div>
+    <div class="ctas">
+      <button class="btn btn-primary" id="btn-continue">Continue</button>
+      <button class="btn btn-secondary" id="btn-replay">Démo</button>
+    </div>
+  </div>
+
+  <!-- LOSS SCREEN -->
+  <div class="screen" id="screen-loss">
+    <div class="topbar">
+      <button class="back-btn" id="btn-back-from-loss">‹</button>
+      <span class="clock">9:41</span>
+      <span style="width: 40px;"></span>
+    </div>
+    <div class="lesson-tag">Lesson card</div>
+    <div class="scene">
+      <div class="confetti-band" style="background: linear-gradient(135deg, #fff0e0, #fff7eb);">
+        <div class="mascot">
+          <div class="smile" style="border-bottom: none; border-top: 3px solid var(--ink); border-radius: 30px 30px 0 0; bottom: 24px;"></div>
+          <div class="blush left"></div>
+          <div class="blush right"></div>
+        </div>
+      </div>
+      <h1 class="head-line">Pas grave !<br/>On retente ?</h1>
+      <p class="sub-line" id="loss-summary">Le pli a été pris par l'adversaire. La règle&nbsp;: la carte la plus forte de la couleur demandée gagne.</p>
+    </div>
+    <div class="ctas">
+      <button class="btn btn-primary" id="btn-retry">Rejouer</button>
+      <button class="btn btn-secondary" id="btn-back-home">Retour</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+/* =========================================================================
+   Petit Bridge engine — port JS du moteur TS (pour exécution browser direct)
+   ========================================================================= */
+
+const SUITS = ['red', 'blue', 'green', 'yellow'];
+const SEATS = ['N', 'E', 'S', 'W'];
+const teamOf = (s) => (s === 'N' || s === 'S') ? 'NS' : 'EW';
+const partnerOf = (s) => ({N:'S',S:'N',E:'W',W:'E'})[s];
+const nextSeat = (s) => ({N:'E',E:'S',S:'W',W:'N'})[s];
+const cardId = (c) => c.suit[0].toUpperCase() + c.rank;
+
+function buildDeck(deckSize) {
+  const ranksPerSuit = deckSize / 4;
+  const deck = [];
+  for (const suit of SUITS) {
+    for (let r = 1; r <= ranksPerSuit; r++) deck.push({ suit, rank: r });
+  }
+  return deck;
+}
+function shuffle(items, rng = Math.random) {
+  const arr = [...items];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function dealCards(deck, dealer) {
+  const hands = { N: [], E: [], S: [], W: [] };
+  const dealerIdx = SEATS.indexOf(dealer);
+  for (let i = 0; i < deck.length; i++) {
+    const seat = SEATS[(dealerIdx + 1 + i) % 4];
+    hands[seat].push(deck[i]);
+  }
+  return hands;
+}
+function sortHand(hand) {
+  const order = { red: 0, yellow: 1, green: 2, blue: 3 };
+  return [...hand].sort((a, b) => a.suit !== b.suit ? order[a.suit] - order[b.suit] : b.rank - a.rank);
+}
+function isLegalPlay(card, hand, leadSuit) {
+  if (!hand.some(c => c.suit === card.suit && c.rank === card.rank)) return false;
+  if (!leadSuit) return true;
+  const has = hand.some(c => c.suit === leadSuit);
+  return has ? card.suit === leadSuit : true;
+}
+function legalPlays(hand, leadSuit) {
+  if (!leadSuit) return [...hand];
+  const f = hand.filter(c => c.suit === leadSuit);
+  return f.length > 0 ? f : [...hand];
+}
+function resolveTrickWinner(plays) {
+  const lead = plays[0].card.suit;
+  let win = plays[0];
+  for (const p of plays.slice(1)) {
+    if (p.card.suit === lead && p.card.rank > win.card.rank) win = p;
+  }
+  return win.seat;
+}
+function removeCard(hand, card) {
+  const i = hand.findIndex(c => c.suit === card.suit && c.rank === card.rank);
+  return [...hand.slice(0, i), ...hand.slice(i + 1)];
+}
+function startDeal({ deckSize, dealer, rng }) {
+  const hands = dealCards(shuffle(buildDeck(deckSize), rng), dealer);
+  const dummy = nextSeat(dealer);
+  return {
+    deckSize,
+    cardsPerHand: deckSize / 4,
+    hands,
+    dealer,
+    declarer: dealer,
+    dummy,
+    phase: 'opening',
+    currentTrick: { index: 0, plays: [], leader: dealer, leadSuit: null },
+    completedTricks: [],
+    tricksWon: { NS: 0, EW: 0 },
+    nextToPlay: dealer,
+  };
+}
+function applyPlay(deal, play) {
+  const hand = deal.hands[play.seat];
+  if (!isLegalPlay(play.card, hand, deal.currentTrick.leadSuit))
+    throw new Error('Illegal play');
+  const newHands = { ...deal.hands, [play.seat]: removeCard(hand, play.card) };
+  const newPlays = [...deal.currentTrick.plays, play];
+  const isLeader = newPlays.length === 1;
+  const leadSuit = isLeader ? play.card.suit : deal.currentTrick.leadSuit;
+
+  if (newPlays.length < 4) {
+    return {
+      ...deal,
+      hands: newHands,
+      phase: deal.phase === 'opening' ? 'playing' : deal.phase,
+      currentTrick: { ...deal.currentTrick, plays: newPlays, leadSuit },
+      nextToPlay: nextSeat(play.seat),
+    };
+  }
+  const winner = resolveTrickWinner(newPlays);
+  const completed = { index: deal.currentTrick.index, plays: newPlays, leader: deal.currentTrick.leader, leadSuit, winner };
+  const tricksWon = { ...deal.tricksWon };
+  tricksWon[teamOf(winner)] += 1;
+  const dealComplete = newHands[winner].length === 0;
+  return {
+    ...deal,
+    hands: newHands,
+    phase: dealComplete ? 'completed' : 'trick_won',
+    currentTrick: { index: completed.index + 1, plays: [], leader: winner, leadSuit: null },
+    completedTricks: [...deal.completedTricks, completed],
+    tricksWon,
+    nextToPlay: winner,
+  };
+}
+function chooseCard(deal, difficulty = 'fair') {
+  const hand = deal.hands[deal.nextToPlay];
+  const cands = legalPlays(hand, deal.currentTrick.leadSuit);
+  const lowest = (xs) => xs.reduce((a, b) => a.rank <= b.rank ? a : b);
+  const highest = (xs) => xs.reduce((a, b) => a.rank >= b.rank ? a : b);
+  if (cands.length === 1) return cands[0];
+  if (difficulty === 'gentle') return lowest(cands);
+
+  const plays = deal.currentTrick.plays;
+  if (plays.length === 0) return lowest(cands);
+  const lead = deal.currentTrick.leadSuit;
+  const followers = plays.filter(p => p.card.suit === lead);
+  const winner = followers.length ? followers.reduce((a,b) => a.card.rank>=b.card.rank?a:b) : null;
+  const followingSuit = cands.every(c => c.suit === lead);
+  if (!followingSuit) return lowest(cands);
+  const beats = winner ? cands.filter(c => c.rank > winner.card.rank) : cands;
+  if (difficulty === 'sharp') return beats.length > 0 ? highest(beats) : lowest(cands);
+  return beats.length > 0 ? lowest(beats) : lowest(cands);
+}
+
+/* =========================================================================
+   UI controller
+   ========================================================================= */
+const SUIT_PIP = { red: '●', blue: '●', green: '●', yellow: '●' };
+
+const screens = {
+  home: document.getElementById('screen-home'),
+  game: document.getElementById('screen-game'),
+  win:  document.getElementById('screen-win'),
+  loss: document.getElementById('screen-loss'),
+};
+function showScreen(name) {
+  for (const s of Object.values(screens)) s.classList.remove('active');
+  screens[name].classList.add('active');
+}
+
+let state = null; // current Deal
+let chosenDeckSize = 16;
+let aiDelayMs = 600;
+let firstTrickResolvedFor = null; // 'NS' | 'EW' once first trick is done
+
+// Deck picker
+document.querySelectorAll('.deck-pick').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.deck-pick').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    chosenDeckSize = parseInt(btn.dataset.deck, 10);
+  });
+});
+
+// Start
+document.getElementById('btn-start').addEventListener('click', () => {
+  startNewDeal();
+  showScreen('game');
+});
+document.getElementById('btn-quit').addEventListener('click', () => showScreen('home'));
+document.getElementById('btn-back-from-win').addEventListener('click', () => showScreen('home'));
+document.getElementById('btn-back-from-loss').addEventListener('click', () => showScreen('home'));
+document.getElementById('btn-continue').addEventListener('click', () => { startNewDeal(); showScreen('game'); });
+document.getElementById('btn-replay').addEventListener('click', () => { startNewDeal(); showScreen('game'); });
+document.getElementById('btn-retry').addEventListener('click', () => { startNewDeal(); showScreen('game'); });
+document.getElementById('btn-back-home').addEventListener('click', () => showScreen('home'));
+
+function startNewDeal() {
+  state = startDeal({ deckSize: chosenDeckSize, dealer: 'S' });
+  firstTrickResolvedFor = null;
+  render();
+}
+
+function showToast(msg, ms = 1400) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function render() {
+  // Hand backs (N, E, W) — show count of cards, face-down
+  for (const seat of ['N', 'E', 'W']) {
+    const el = document.getElementById('hand-' + seat);
+    el.innerHTML = '';
+    for (let i = 0; i < state.hands[seat].length; i++) {
+      const back = document.createElement('div');
+      back.className = 'card-back';
+      el.appendChild(back);
+    }
+  }
+
+  // Trick zone
+  const trickEl = document.getElementById('trick');
+  trickEl.innerHTML = '';
+  for (const p of state.currentTrick.plays) {
+    const c = document.createElement('div');
+    c.className = 'placed ' + p.seat;
+    c.dataset.suit = p.card.suit;
+    c.textContent = p.card.rank;
+    trickEl.appendChild(c);
+  }
+
+  // Player hand (S)
+  const sHand = sortHand(state.hands.S);
+  const handEl = document.getElementById('hand-S');
+  handEl.innerHTML = '';
+  const isPlayerTurn = state.nextToPlay === 'S' && (state.phase === 'opening' || state.phase === 'playing');
+  const legals = isPlayerTurn ? legalPlays(state.hands.S, state.currentTrick.leadSuit) : [];
+  const legalSet = new Set(legals.map(cardId));
+
+  for (const card of sHand) {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.dataset.suit = card.suit;
+    if (isPlayerTurn) {
+      if (legalSet.has(cardId(card))) el.classList.add('legal');
+      else el.classList.add('disabled');
+    } else {
+      el.classList.add('disabled');
+    }
+    el.innerHTML = `
+      <div class="corner" style="align-self: flex-start;">${card.rank}</div>
+      <div class="pip"></div>
+      <div class="corner" style="align-self: flex-end; transform: rotate(180deg);">${card.rank}</div>
+    `;
+    el.addEventListener('click', () => {
+      if (!isPlayerTurn || !legalSet.has(cardId(card))) {
+        if (isPlayerTurn) showToast('Tu dois fournir la couleur demandée !');
+        return;
+      }
+      humanPlay(card);
+    });
+    handEl.appendChild(el);
+  }
+
+  // Instructions
+  const inst = document.getElementById('player-instructions');
+  if (state.phase === 'completed') {
+    inst.innerHTML = `<strong>Donne terminée !</strong> NS=${state.tricksWon.NS} · EW=${state.tricksWon.EW}`;
+  } else if (state.phase === 'trick_won') {
+    inst.innerHTML = `<strong>Pli pour ${teamOf(state.completedTricks.at(-1).winner) === 'NS' ? 'TON équipe' : 'l\\'adversaire'}</strong>`;
+  } else if (isPlayerTurn) {
+    if (state.currentTrick.leadSuit) {
+      inst.innerHTML = `<strong>À toi !</strong> Couleur demandée&nbsp;: <span style="color: var(--suit-${state.currentTrick.leadSuit}); font-weight: 700;">●</span>`;
+    } else {
+      inst.innerHTML = `<strong>À toi d'entamer !</strong> Choisis une carte.`;
+    }
+  } else {
+    inst.innerHTML = `<em style="color: var(--ink-soft)">${state.nextToPlay} réfléchit…</em>`;
+  }
+}
+
+function humanPlay(card) {
+  state = applyPlay(state, { seat: 'S', card });
+  render();
+  scheduleNext();
+}
+
+function scheduleNext() {
+  if (state.phase === 'trick_won') {
+    // First trick — branch to win/loss screens.
+    if (firstTrickResolvedFor === null) {
+      const trick = state.completedTricks[0];
+      firstTrickResolvedFor = teamOf(trick.winner);
+      setTimeout(() => {
+        if (firstTrickResolvedFor === 'NS') showWinScreen(trick);
+        else showLossScreen(trick);
+      }, 700);
+      return;
+    }
+    // Subsequent tricks — continue play
+    setTimeout(() => {
+      state = { ...state, phase: 'playing' };
+      render();
+      scheduleNext();
+    }, 800);
+    return;
+  }
+  if (state.phase === 'completed') {
+    return;
+  }
+  if (state.nextToPlay !== 'S') {
+    setTimeout(() => {
+      const card = chooseCard(state, 'fair');
+      state = applyPlay(state, { seat: state.nextToPlay, card });
+      render();
+      scheduleNext();
+    }, aiDelayMs);
+  }
+}
+
+function describeTrick(trick) {
+  const winnerCard = trick.plays.find(p => p.seat === trick.winner).card;
+  const yourCard = trick.plays.find(p => p.seat === 'S')?.card;
+  if (teamOf(trick.winner) === 'NS') {
+    if (trick.winner === 'S') {
+      return `Tu as posé le ${winnerCard.rank}, la plus forte de la couleur demandée.`;
+    }
+    return `Ton partenaire (Nord) a posé le ${winnerCard.rank} : pli gagné en équipe !`;
+  } else {
+    if (yourCard) {
+      return `Ton ${yourCard.rank} a été coiffé par le ${winnerCard.rank} adverse. La règle : la plus forte carte de la couleur demandée gagne.`;
+    }
+    return `L'adversaire a pris le pli avec le ${winnerCard.rank}.`;
+  }
+}
+
+function showWinScreen(trick) {
+  document.getElementById('win-summary').textContent = describeTrick(trick);
+  showScreen('win');
+  // Confetti burst
+  if (window.confetti) {
+    confetti({ particleCount: 90, spread: 75, origin: { y: 0.4 }, colors: ['#ff6b3d', '#4a90ff', '#7bc96f', '#ffc83d', '#ff8db3'] });
+    setTimeout(() => confetti({ particleCount: 60, spread: 100, angle: 60, origin: { x: 0, y: 0.5 } }), 220);
+    setTimeout(() => confetti({ particleCount: 60, spread: 100, angle: 120, origin: { x: 1, y: 0.5 } }), 380);
+  }
+}
+function showLossScreen(trick) {
+  document.getElementById('loss-summary').textContent = describeTrick(trick);
+  showScreen('loss');
+}
+
+// Boot — start screen visible by default.
+showScreen('home');
+</script>
+</body>
+</html>
