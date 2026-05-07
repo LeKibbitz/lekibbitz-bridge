@@ -485,7 +485,20 @@
 
 </div>
 
-<script type="module">
+<script>
+window.addEventListener('error', (e) => {
+  const msg = `JS error: ${e.message} @ ${e.filename}:${e.lineno}:${e.colno}`;
+  console.error(msg, e.error);
+  let banner = document.getElementById('js-error-banner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'js-error-banner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff4444;color:white;padding:12px;font:600 13px sans-serif;z-index:9999;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.2)';
+    document.body.appendChild(banner);
+  }
+  banner.textContent = msg;
+});
+(function () {
 /* =========================================================================
    Petit Bridge engine — port JS du moteur TS (pour exécution browser direct)
    ========================================================================= */
@@ -736,7 +749,9 @@ function render() {
   if (state.phase === 'completed') {
     inst.innerHTML = `<strong>Donne terminée !</strong> NS=${state.tricksWon.NS} · EW=${state.tricksWon.EW}`;
   } else if (state.phase === 'trick_won') {
-    inst.innerHTML = `<strong>Pli pour ${teamOf(state.completedTricks.at(-1).winner) === 'NS' ? 'TON équipe' : 'l\\'adversaire'}</strong>`;
+    var lastTrick = state.completedTricks[state.completedTricks.length - 1];
+    var winnerLabel = teamOf(lastTrick.winner) === 'NS' ? 'TON équipe' : "l'adversaire";
+    inst.innerHTML = '<strong>Pli pour ' + winnerLabel + '</strong>';
   } else if (isPlayerTurn) {
     if (state.currentTrick.leadSuit) {
       inst.innerHTML = `<strong>À toi !</strong> Couleur demandée&nbsp;: <span style="color: var(--suit-${state.currentTrick.leadSuit}); font-weight: 700;">●</span>`;
@@ -820,6 +835,8 @@ function showLossScreen(trick) {
 
 // Boot — start screen visible by default.
 showScreen('home');
+console.log('Lekibbitz Bridge — script booted OK');
+})();
 </script>
 </body>
 </html>
