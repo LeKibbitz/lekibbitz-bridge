@@ -33,31 +33,34 @@
   html, body { margin: 0; padding: 0; }
   body {
     font-family: 'Quicksand', system-ui, sans-serif;
-    background: var(--bg);
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255, 211, 165, 0.35), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(165, 200, 255, 0.30), transparent 70%),
+      linear-gradient(180deg, #f7f4ee 0%, #eef2f7 100%);
     color: var(--ink);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 24px;
   }
 
-  /* App shell — phone-like frame on big screens, full-bleed on phones */
+  /* App shell — wide on desktop, full-bleed on phones */
   .app {
     width: 100%;
-    max-width: 420px;
+    max-width: 760px;
     background: var(--surface);
-    border-radius: 32px;
-    box-shadow: var(--shadow-floating);
+    border-radius: 28px;
+    box-shadow: 0 20px 60px rgba(31, 58, 95, 0.18), 0 4px 12px rgba(31, 58, 95, 0.06);
     overflow: hidden;
     position: relative;
     min-height: 720px;
     display: flex;
     flex-direction: column;
   }
-  @media (max-width: 480px) {
-    body { padding: 0; }
-    .app { border-radius: 0; min-height: 100vh; box-shadow: none; }
+  @media (max-width: 600px) {
+    body { padding: 0; background: var(--surface); }
+    .app { border-radius: 0; min-height: 100vh; box-shadow: none; max-width: 100%; }
   }
 
   /* Header bar */
@@ -209,23 +212,38 @@
 
   /* Game scene */
   .game {
-    flex: 1; display: flex; flex-direction: column; padding: 6px 18px 18px;
+    flex: 1; display: flex; flex-direction: column; padding: 6px 22px 22px;
+    gap: 4px;
+  }
+  @media (max-width: 600px) {
+    .game { padding: 4px 12px 14px; }
   }
   .table {
     flex: 1;
-    background: linear-gradient(160deg, #f5f8ff, #eef3ff);
+    background:
+      radial-gradient(ellipse at center, #eef5ff 0%, #e3ecf7 100%);
     border-radius: var(--radius-card);
-    padding: 14px;
+    padding: 18px;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 2fr 1fr;
     grid-template-rows: 1fr auto;
-    gap: 8px;
-    min-height: 220px;
+    gap: 12px;
+    min-height: 240px;
+    position: relative;
+  }
+  .table::before {
+    content: ''; position: absolute; inset: 8px;
+    border: 1px dashed rgba(74, 144, 255, 0.18);
+    border-radius: calc(var(--radius-card) - 6px);
+    pointer-events: none;
+  }
+  @media (max-width: 600px) {
+    .table { padding: 12px; min-height: 200px; gap: 6px; }
   }
   /* Dummy zone (Nord) — full width above the table, large readable cards */
   .dummy-zone {
-    margin-bottom: 10px;
-    padding: 12px 12px 14px;
+    margin-bottom: 8px;
+    padding: 14px 16px 18px;
     background: linear-gradient(180deg, #fff8ee 0%, #fff3e0 100%);
     border: 2px dashed #ffd4a3;
     border-radius: var(--radius-card);
@@ -267,41 +285,47 @@
   .dummy-suit-pip[data-suit="green"]  { background: var(--suit-green); }
   .dummy-suit-pip[data-suit="yellow"] { background: var(--suit-yellow); }
   .dummy-card {
-    width: 38px; height: 54px; border-radius: 7px;
-    background: white; border: 2px solid #e3e8f0;
+    width: 56px; height: 78px; border-radius: 9px;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfd 100%);
+    border: 2px solid #e3e8f0;
     display: flex; align-items: center; justify-content: center;
-    font: 700 18px 'Fredoka', sans-serif;
-    box-shadow: 0 2px 5px rgba(31, 58, 95, 0.08);
-    margin-top: -22px;
-    transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    font: 800 22px 'Fredoka', sans-serif;
+    box-shadow: 0 2px 6px rgba(31, 58, 95, 0.10);
+    margin-top: -34px;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
     cursor: default;
     position: relative;
   }
   .dummy-card:first-child { margin-top: 0; }
-  .dummy-card[data-suit="red"]    { color: var(--suit-red); }
-  .dummy-card[data-suit="blue"]   { color: var(--suit-blue); }
-  .dummy-card[data-suit="green"]  { color: var(--suit-green); }
-  .dummy-card[data-suit="yellow"] { color: var(--suit-yellow); }
+  .dummy-card[data-suit="red"]    { color: var(--suit-red); border-color: rgba(255, 107, 107, 0.35); }
+  .dummy-card[data-suit="blue"]   { color: var(--suit-blue); border-color: rgba(74, 144, 255, 0.35); }
+  .dummy-card[data-suit="green"]  { color: var(--suit-green); border-color: rgba(123, 201, 111, 0.35); }
+  .dummy-card[data-suit="yellow"] { color: var(--suit-yellow); border-color: rgba(255, 200, 61, 0.4); }
   .dummy-card.played {
-    opacity: 0.3;
-    filter: grayscale(0.8);
+    opacity: 0.35;
+    filter: grayscale(0.7);
   }
   .dummy-card.played::after {
-    content: ''; position: absolute; inset: 8px 6px;
+    content: ''; position: absolute; inset: 10px 8px;
     border-top: 2px solid var(--ink-soft);
     transform: rotate(-15deg);
   }
   .dummy-card.legal {
-    border-color: var(--accent-green);
+    border-color: var(--accent-green) !important;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(123, 201, 111, 0.35);
+    box-shadow: 0 6px 14px rgba(123, 201, 111, 0.4);
   }
   .dummy-card.legal:hover {
-    transform: translateY(-4px) scale(1.04);
+    transform: translateY(-6px) scale(1.06);
+    box-shadow: 0 10px 22px rgba(123, 201, 111, 0.5);
   }
   .dummy-card.disabled-turn {
-    opacity: 0.85;
+    opacity: 0.92;
     cursor: default;
+  }
+  @media (max-width: 600px) {
+    .dummy-card { width: 44px; height: 62px; font-size: 18px; margin-top: -26px; }
+    .dummy-suit-pip { width: 14px; height: 14px; }
   }
   .seat {
     display: flex; align-items: center; justify-content: center;
@@ -316,15 +340,21 @@
   .seat-label { margin-bottom: 4px; }
   .seat-label.dummy { color: var(--brand-orange); }
   .hand-back {
-    display: flex; gap: -4px;
+    display: flex; gap: -10px;
+    flex-wrap: wrap; justify-content: center;
   }
   .card-back {
-    width: 22px; height: 32px;
-    background: repeating-linear-gradient(45deg, var(--brand-navy), var(--brand-navy) 4px, #2a4d7a 4px, #2a4d7a 8px);
-    border: 1.5px solid white; border-radius: 4px;
-    margin-left: -10px;
+    width: 32px; height: 46px;
+    background:
+      repeating-linear-gradient(45deg, var(--brand-navy), var(--brand-navy) 4px, #2a4d7a 4px, #2a4d7a 8px);
+    border: 2px solid white; border-radius: 6px;
+    margin-left: -16px;
+    box-shadow: 0 2px 4px rgba(31, 58, 95, 0.15);
   }
   .card-back:first-child { margin-left: 0; }
+  @media (max-width: 600px) {
+    .card-back { width: 24px; height: 34px; margin-left: -12px; }
+  }
 
   .dummy-hand {
     display: flex; gap: 6px;
@@ -345,20 +375,29 @@
 
   /* The trick zone in the center */
   .trick {
-    position: relative; width: 110px; height: 110px;
+    position: relative; width: 150px; height: 150px;
   }
   .trick .placed {
-    position: absolute; width: 38px; height: 54px;
-    border-radius: 6px; background: white;
-    border: 1.5px solid #d6dde8;
+    position: absolute; width: 50px; height: 72px;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfd 100%);
+    border: 2px solid #d6dde8;
     display: flex; align-items: center; justify-content: center;
-    font: 700 16px 'Fredoka', sans-serif;
-    box-shadow: 0 2px 6px rgba(31, 58, 95, 0.12);
+    font: 800 22px 'Fredoka', sans-serif;
+    box-shadow: 0 4px 10px rgba(31, 58, 95, 0.14);
   }
-  .trick .placed.S { left: 36px; bottom: 0; }
-  .trick .placed.N { left: 36px; top: 0; }
-  .trick .placed.W { left: 0; top: 28px; }
-  .trick .placed.E { right: 0; top: 28px; }
+  .trick .placed.S { left: 50px; bottom: 0; }
+  .trick .placed.N { left: 50px; top: 0; }
+  .trick .placed.W { left: 0; top: 39px; }
+  .trick .placed.E { right: 0; top: 39px; }
+  @media (max-width: 600px) {
+    .trick { width: 120px; height: 120px; }
+    .trick .placed { width: 40px; height: 58px; font-size: 18px; }
+    .trick .placed.S { left: 40px; }
+    .trick .placed.N { left: 40px; }
+    .trick .placed.W { top: 31px; }
+    .trick .placed.E { top: 31px; }
+  }
   .trick .placed.winner {
     box-shadow: 0 0 0 3px var(--accent-green), 0 6px 18px rgba(123, 201, 111, 0.55);
     animation: pulse-win 0.9s ease-in-out infinite;
@@ -389,54 +428,93 @@
     margin-bottom: 10px;
   }
   .player-instructions strong { color: var(--ink); }
+
+  /* Real-looking card with corner pips top-left + bottom-right and a big center pip. */
   .card {
-    width: 76px; height: 110px; border-radius: 14px;
-    background: white; border: 2px solid #d6dde8;
-    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    padding: 8px 6px;
+    width: 86px; height: 124px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfd 100%);
+    border: 2px solid #d6dde8;
+    display: flex; flex-direction: column;
+    padding: 8px 10px;
     cursor: default;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-    box-shadow: var(--shadow-card);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 3px 8px rgba(31,58,95,0.10), 0 1px 2px rgba(31,58,95,0.06);
     position: relative;
     flex-shrink: 0;
+    user-select: none;
   }
-  /* All cards always visible. Disabled = grey-out but not hidden, no movement. */
+  .card .corner-top, .card .corner-bot {
+    position: absolute;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    line-height: 1;
+  }
+  .card .corner-top { top: 8px; left: 10px; }
+  .card .corner-bot { bottom: 8px; right: 10px; transform: rotate(180deg); }
+  .card .corner-rank {
+    font: 800 22px 'Fredoka', sans-serif;
+  }
+  .card .corner-pip {
+    width: 12px; height: 12px; border-radius: 50%;
+  }
+  .card .center-pip {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px; height: 50px; border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12) inset, 0 0 0 4px rgba(255,255,255,0.5) inset;
+  }
+
+  .card[data-suit="red"]    { border-color: rgba(255, 107, 107, 0.35); }
+  .card[data-suit="blue"]   { border-color: rgba(74, 144, 255, 0.35); }
+  .card[data-suit="green"]  { border-color: rgba(123, 201, 111, 0.35); }
+  .card[data-suit="yellow"] { border-color: rgba(255, 200, 61, 0.4); }
+  .card[data-suit="red"]    .corner-rank, .card[data-suit="red"]    .corner-pip,
+  .card[data-suit="red"]    .center-pip { color: var(--suit-red); background-color: var(--suit-red); }
+  .card[data-suit="blue"]   .corner-rank, .card[data-suit="blue"]   .corner-pip,
+  .card[data-suit="blue"]   .center-pip { color: var(--suit-blue); background-color: var(--suit-blue); }
+  .card[data-suit="green"]  .corner-rank, .card[data-suit="green"]  .corner-pip,
+  .card[data-suit="green"]  .center-pip { color: var(--suit-green); background-color: var(--suit-green); }
+  .card[data-suit="yellow"] .corner-rank, .card[data-suit="yellow"] .corner-pip,
+  .card[data-suit="yellow"] .center-pip { color: var(--suit-yellow); background-color: var(--suit-yellow); }
+  .card .corner-rank { background-color: transparent !important; }
+
+  /* Disabled = grey-out, still visible, no animation. */
   .card.disabled {
-    opacity: 0.55;
-    filter: grayscale(0.3);
+    opacity: 0.45;
+    filter: grayscale(0.5);
     cursor: not-allowed;
     border-color: #e3e8f0;
   }
-  /* Legal cards LIFT permanently to signal "you can play me", and lift further on hover. */
+  /* Legal cards LIFT permanently and float gently. Hover lifts more. */
   .card.legal {
     cursor: pointer;
-    border-color: var(--accent-green);
-    transform: translateY(-12px);
-    box-shadow: 0 8px 18px rgba(123, 201, 111, 0.35), 0 2px 4px rgba(31,58,95,0.06);
-    animation: card-float 2.2s ease-in-out infinite;
+    border-color: var(--accent-green) !important;
+    transform: translateY(-16px);
+    box-shadow: 0 14px 28px rgba(123, 201, 111, 0.30), 0 4px 8px rgba(31,58,95,0.08);
+    animation: card-float 2.4s ease-in-out infinite;
   }
   .card.legal:hover {
-    transform: translateY(-20px) scale(1.04);
-    box-shadow: 0 14px 26px rgba(123, 201, 111, 0.45), 0 4px 8px rgba(31,58,95,0.1);
+    transform: translateY(-24px) scale(1.05);
+    box-shadow: 0 20px 36px rgba(123, 201, 111, 0.42), 0 6px 12px rgba(31,58,95,0.12);
     animation: none;
   }
   @keyframes card-float {
-    0%, 100% { transform: translateY(-12px); }
-    50%      { transform: translateY(-15px); }
+    0%, 100% { transform: translateY(-16px) rotate(0deg); }
+    50%      { transform: translateY(-19px) rotate(0.5deg); }
   }
-  .card .corner {
-    font: 700 24px 'Fredoka', sans-serif;
-  }
-  .card .pip {
-    width: 34px; height: 34px; border-radius: 50%;
-  }
-  /* Hand container: wrap if needed, generous gap so all cards always visible */
+  /* Hand container: one row if possible, wrap only if the deck is huge */
   .hand {
-    display: flex; gap: 10px; justify-content: center;
+    display: flex; gap: 8px; justify-content: center;
     flex-wrap: wrap;
-    padding: 18px 8px 10px;            /* extra top padding so lifted cards don't clip */
-    min-height: 130px;
+    padding: 26px 12px 14px;
+    min-height: 150px;
     align-items: flex-end;
+  }
+  @media (max-width: 600px) {
+    .card { width: 64px; height: 92px; }
+    .card .corner-rank { font-size: 18px; }
+    .card .center-pip { width: 36px; height: 36px; }
+    .hand { gap: 6px; padding: 22px 8px 10px; min-height: 120px; }
   }
   .card[data-suit="red"]    .corner, .card[data-suit="red"] .pip    { color: var(--suit-red); background-color: var(--suit-red); }
   .card[data-suit="blue"]   .corner, .card[data-suit="blue"] .pip   { color: var(--suit-blue); background-color: var(--suit-blue); }
@@ -1118,11 +1196,16 @@ function render() {
     } else {
       el.classList.add('disabled');
     }
-    el.innerHTML = `
-      <div class="corner" style="align-self: flex-start;">${card.rank}</div>
-      <div class="pip"></div>
-      <div class="corner" style="align-self: flex-end; transform: rotate(180deg);">${card.rank}</div>
-    `;
+    el.innerHTML =
+      '<div class="corner-top">' +
+        '<span class="corner-rank">' + card.rank + '</span>' +
+        '<span class="corner-pip"></span>' +
+      '</div>' +
+      '<div class="center-pip"></div>' +
+      '<div class="corner-bot">' +
+        '<span class="corner-rank">' + card.rank + '</span>' +
+        '<span class="corner-pip"></span>' +
+      '</div>';
     el.addEventListener('click', () => {
       if (!isPlayerTurn || !legalSet.has(cardId(card))) {
         if (isPlayerTurn) showToast('Tu dois fournir la couleur demandée !');
