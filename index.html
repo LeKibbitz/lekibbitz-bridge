@@ -218,20 +218,101 @@
     padding: 14px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: 1fr auto;
     gap: 8px;
-    min-height: 360px;
+    min-height: 220px;
+  }
+  /* Dummy zone (Nord) — full width above the table, large readable cards */
+  .dummy-zone {
+    margin-bottom: 10px;
+    padding: 12px 12px 14px;
+    background: linear-gradient(180deg, #fff8ee 0%, #fff3e0 100%);
+    border: 2px dashed #ffd4a3;
+    border-radius: var(--radius-card);
+  }
+  .dummy-zone-label {
+    text-align: center;
+    font: 700 11px 'Quicksand', sans-serif;
+    color: var(--brand-orange);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+  }
+  .dummy-zone-label .your-turn {
+    background: var(--brand-orange); color: white;
+    padding: 2px 8px; border-radius: 10px;
+    margin-left: 6px; text-transform: none; letter-spacing: 0;
+    font-size: 11px;
+  }
+  .dummy-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    min-height: 90px;
+  }
+  .dummy-board.placeholder {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-soft); font: 500 12px 'Quicksand', sans-serif;
+    font-style: italic;
+  }
+  .dummy-suit-col {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .dummy-suit-pip {
+    width: 18px; height: 18px; border-radius: 50%;
+    margin-bottom: 4px;
+  }
+  .dummy-suit-pip[data-suit="red"]    { background: var(--suit-red); }
+  .dummy-suit-pip[data-suit="blue"]   { background: var(--suit-blue); }
+  .dummy-suit-pip[data-suit="green"]  { background: var(--suit-green); }
+  .dummy-suit-pip[data-suit="yellow"] { background: var(--suit-yellow); }
+  .dummy-card {
+    width: 38px; height: 54px; border-radius: 7px;
+    background: white; border: 2px solid #e3e8f0;
+    display: flex; align-items: center; justify-content: center;
+    font: 700 18px 'Fredoka', sans-serif;
+    box-shadow: 0 2px 5px rgba(31, 58, 95, 0.08);
+    margin-top: -22px;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    cursor: default;
+    position: relative;
+  }
+  .dummy-card:first-child { margin-top: 0; }
+  .dummy-card[data-suit="red"]    { color: var(--suit-red); }
+  .dummy-card[data-suit="blue"]   { color: var(--suit-blue); }
+  .dummy-card[data-suit="green"]  { color: var(--suit-green); }
+  .dummy-card[data-suit="yellow"] { color: var(--suit-yellow); }
+  .dummy-card.played {
+    opacity: 0.3;
+    filter: grayscale(0.8);
+  }
+  .dummy-card.played::after {
+    content: ''; position: absolute; inset: 8px 6px;
+    border-top: 2px solid var(--ink-soft);
+    transform: rotate(-15deg);
+  }
+  .dummy-card.legal {
+    border-color: var(--accent-green);
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(123, 201, 111, 0.35);
+  }
+  .dummy-card.legal:hover {
+    transform: translateY(-4px) scale(1.04);
+  }
+  .dummy-card.disabled-turn {
+    opacity: 0.85;
+    cursor: default;
   }
   .seat {
     display: flex; align-items: center; justify-content: center;
     flex-direction: column;
     color: var(--ink-soft); font-size: 12px; font-weight: 600;
   }
-  .seat-N { grid-column: 2; grid-row: 1; }
-  .seat-W { grid-column: 1; grid-row: 2; }
-  .seat-E { grid-column: 3; grid-row: 2; }
-  .seat-S { grid-column: 2; grid-row: 3; }
-  .center { grid-column: 2; grid-row: 2; display: flex; align-items: center; justify-content: center; }
+  /* Nord is now in its own zone above the table; remaining seats W / center / E / S */
+  .seat-W { grid-column: 1; grid-row: 1; }
+  .seat-E { grid-column: 3; grid-row: 1; }
+  .seat-S { grid-column: 2; grid-row: 2; }
+  .center { grid-column: 2; grid-row: 1; display: flex; align-items: center; justify-content: center; }
   .seat-label { margin-bottom: 4px; }
   .seat-label.dummy { color: var(--brand-orange); }
   .hand-back {
@@ -312,24 +393,27 @@
     display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
   }
   .card {
-    width: 56px; height: 84px; border-radius: 10px;
+    width: 68px; height: 100px; border-radius: 12px;
     background: white; border: 2px solid #d6dde8;
     display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-    padding: 6px 4px;
+    padding: 8px 6px;
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     box-shadow: var(--shadow-card);
     position: relative;
   }
-  .card:hover { transform: translateY(-6px); }
+  .card:hover { transform: translateY(-6px); box-shadow: 0 10px 22px rgba(31,58,95,0.18); }
   .card.disabled { opacity: 0.45; cursor: not-allowed; }
   .card.disabled:hover { transform: none; }
-  .card.legal { border-color: var(--accent-green); }
+  .card.legal {
+    border-color: var(--accent-green);
+    box-shadow: 0 4px 10px rgba(123, 201, 111, 0.3);
+  }
   .card .corner {
-    font: 700 18px 'Fredoka', sans-serif;
+    font: 700 22px 'Fredoka', sans-serif;
   }
   .card .pip {
-    width: 24px; height: 24px; border-radius: 50%;
+    width: 30px; height: 30px; border-radius: 50%;
   }
   .card[data-suit="red"]    .corner, .card[data-suit="red"] .pip    { color: var(--suit-red); background-color: var(--suit-red); }
   .card[data-suit="blue"]   .corner, .card[data-suit="blue"] .pip   { color: var(--suit-blue); background-color: var(--suit-blue); }
@@ -479,11 +563,13 @@
     </div>
     <div class="lesson-tag">Lesson card</div>
     <div class="game">
+      <!-- Dummy zone (Nord, mort) — shown above the table for readability -->
+      <div class="dummy-zone">
+        <p class="dummy-zone-label" id="dummy-label">Nord (mort) — c'est toi qui pilotes</p>
+        <div class="dummy-board placeholder" id="hand-N">Le mort s'étalera après ton entame</div>
+      </div>
+
       <div class="table">
-        <div class="seat seat-N">
-          <span class="seat-label">Nord (partenaire)</span>
-          <div class="hand-back" id="hand-N"></div>
-        </div>
         <div class="seat seat-W">
           <span class="seat-label">Ouest</span>
           <div class="hand-back" id="hand-W"></div>
@@ -496,7 +582,7 @@
           <div class="hand-back" id="hand-E"></div>
         </div>
         <div class="seat seat-S">
-          <span class="seat-label">Toi (Sud)</span>
+          <span class="seat-label">Toi (Sud, déclarant)</span>
         </div>
       </div>
 
@@ -812,44 +898,74 @@ function render() {
     }
   }
 
-  // Nord = mort. Cards stay face-down during the opening lead, then are revealed
-  // (Petit Bridge / classic bridge rule). We show the INITIAL hand sorted by suit
-  // (strongest first, top), and grey out cards that have already been played.
+  // Nord = mort. The DECLARER (Sud, the human) controls the dummy in Petit Bridge,
+  // not the AI. Before the opening lead the dummy is hidden; after the lead it
+  // reveals as 4 columns of full-size cards organized by suit, strongest at top.
+  // When it's North's turn, legal cards in the dummy are clickable by the human.
   const nEl = document.getElementById('hand-N');
-  nEl.innerHTML = '';
+  const dummyLabelEl = document.getElementById('dummy-label');
   const dummyRevealed = state.phase !== 'opening' && state.initialHands;
+  const isDummyTurn = state.nextToPlay === 'N' && (state.phase === 'opening' || state.phase === 'playing');
+
   if (!dummyRevealed) {
-    for (let i = 0; i < state.hands.N.length; i++) {
-      const back = document.createElement('div');
-      back.className = 'card-back';
-      nEl.appendChild(back);
-    }
+    nEl.className = 'dummy-board placeholder';
+    nEl.textContent = "Le mort s'étalera dès que tu auras posé ta carte d'entame.";
+    dummyLabelEl.textContent = "Nord (mort) — c'est toi qui pilotes";
   } else {
-    nEl.className = 'dummy-hand';
-    var bySuit = { red: [], blue: [], green: [], yellow: [] };
-    for (var i = 0; i < state.initialHands.N.length; i++) {
-      var c = state.initialHands.N[i];
-      bySuit[c.suit].push(c);
+    nEl.className = 'dummy-board';
+    nEl.textContent = '';
+    var bySuitN = { red: [], blue: [], green: [], yellow: [] };
+    for (var iN = 0; iN < state.initialHands.N.length; iN++) {
+      var cN = state.initialHands.N[iN];
+      bySuitN[cN.suit].push(cN);
     }
-    var stillInHand = new Set(state.hands.N.map(cardId));
-    var suitOrder = ['red', 'yellow', 'green', 'blue'];
-    for (var si = 0; si < suitOrder.length; si++) {
-      var suit = suitOrder[si];
-      if (bySuit[suit].length === 0) continue;
-      var stack = document.createElement('div');
-      stack.className = 'dummy-suit-stack';
-      // Sort: strongest at the top (visually first because flex column top-to-bottom)
-      bySuit[suit].sort(function(a, b) { return b.rank - a.rank; });
-      for (var k = 0; k < bySuit[suit].length; k++) {
-        var card = bySuit[suit][k];
-        var rEl = document.createElement('div');
-        rEl.className = 'dummy-rank' + (stillInHand.has(cardId(card)) ? '' : ' played');
-        rEl.dataset.suit = suit;
-        rEl.textContent = card.rank;
-        stack.appendChild(rEl);
+    var stillInHandN = new Set(state.hands.N.map(cardId));
+    var dummyLegalSet = new Set();
+    if (isDummyTurn) {
+      var dl = legalPlays(state.hands.N, state.currentTrick.leadSuit);
+      dummyLegalSet = new Set(dl.map(cardId));
+    }
+    var suitOrderN = ['red', 'yellow', 'green', 'blue'];
+    for (var sN = 0; sN < suitOrderN.length; sN++) {
+      var suitN = suitOrderN[sN];
+      var col = document.createElement('div');
+      col.className = 'dummy-suit-col';
+      var pip = document.createElement('div');
+      pip.className = 'dummy-suit-pip';
+      pip.dataset.suit = suitN;
+      col.appendChild(pip);
+      // Sort strongest-first
+      bySuitN[suitN].sort(function(a, b) { return b.rank - a.rank; });
+      if (bySuitN[suitN].length === 0) {
+        var empty = document.createElement('div');
+        empty.style.cssText = 'font-size:10px;color:var(--ink-soft);font-style:italic;';
+        empty.textContent = '—';
+        col.appendChild(empty);
+      } else {
+        for (var kN = 0; kN < bySuitN[suitN].length; kN++) {
+          var cardN = bySuitN[suitN][kN];
+          var dEl = document.createElement('div');
+          dEl.className = 'dummy-card';
+          dEl.dataset.suit = suitN;
+          dEl.textContent = cardN.rank;
+          if (!stillInHandN.has(cardId(cardN))) {
+            dEl.classList.add('played');
+          } else if (isDummyTurn && dummyLegalSet.has(cardId(cardN))) {
+            dEl.classList.add('legal');
+            (function (capturedCard) {
+              dEl.addEventListener('click', function () { humanPlayDummy(capturedCard); });
+            })(cardN);
+          } else if (isDummyTurn) {
+            dEl.classList.add('disabled-turn');
+          }
+          col.appendChild(dEl);
+        }
       }
-      nEl.appendChild(stack);
+      nEl.appendChild(col);
     }
+    dummyLabelEl.innerHTML = isDummyTurn
+      ? "Nord (mort) <span class=\"your-turn\">À toi de jouer pour Nord</span>"
+      : "Nord (mort) — c'est toi qui pilotes";
   }
 
   // Trick zone — during trick_won we show the LAST completed trick (4 cards visible)
@@ -926,17 +1042,27 @@ function render() {
     inst.innerHTML = '<strong>' + winnerLabel + '</strong> &middot; carte la plus haute (' + winnerCard.rank + ')';
   } else if (isPlayerTurn) {
     if (state.currentTrick.leadSuit) {
-      inst.innerHTML = `<strong>À toi !</strong> Couleur demandée&nbsp;: <span style="color: var(--suit-${state.currentTrick.leadSuit}); font-weight: 700;">●</span>`;
+      inst.innerHTML = '<strong>À toi !</strong> Couleur demandée : <span style="color: var(--suit-' + state.currentTrick.leadSuit + '); font-weight: 700;">●</span>';
     } else {
-      inst.innerHTML = `<strong>À toi d'entamer !</strong> Choisis une carte.`;
+      inst.innerHTML = "<strong>À toi d'entamer !</strong> Choisis une carte de ta main.";
     }
+  } else if (isDummyTurn) {
+    inst.innerHTML = '<strong>À toi de jouer pour Nord (le mort)</strong> · couleur demandée : <span style="color: var(--suit-' + state.currentTrick.leadSuit + '); font-weight: 700;">●</span>';
   } else {
-    inst.innerHTML = `<em style="color: var(--ink-soft)">${state.nextToPlay} réfléchit…</em>`;
+    var seatLabel = state.nextToPlay === 'E' ? 'Est' : state.nextToPlay === 'W' ? 'Ouest' : state.nextToPlay;
+    inst.innerHTML = '<em style="color: var(--ink-soft)">' + seatLabel + ' réfléchit…</em>';
   }
 }
 
 function humanPlay(card) {
   state = applyPlay(state, { seat: 'S', card });
+  render();
+  scheduleNext();
+}
+
+function humanPlayDummy(card) {
+  // Sud (declarant) plays a card from Nord's hand (the dummy).
+  state = applyPlay(state, { seat: 'N', card });
   render();
   scheduleNext();
 }
@@ -956,8 +1082,8 @@ function scheduleNext() {
     setTimeout(showDealEndScreen, 900);
     return;
   }
-  // AI turn — let the user see what just happened, then play.
-  if (state.nextToPlay !== 'S') {
+  // AI turn (only opponents E and W). Sud plays his hand AND dummy (Nord).
+  if (state.nextToPlay === 'E' || state.nextToPlay === 'W') {
     setTimeout(function () {
       const card = chooseCard(state, 'fair');
       state = applyPlay(state, { seat: state.nextToPlay, card });
@@ -965,6 +1091,7 @@ function scheduleNext() {
       scheduleNext();
     }, aiDelayMs);
   }
+  // If nextToPlay is N or S, we wait for the human to click.
 }
 
 function describeDealOutcome(out) {
