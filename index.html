@@ -372,6 +372,76 @@
     padding: 8px 14px; border-radius: 18px; font: 600 14px 'Quicksand', sans-serif; cursor: pointer;
   }
   .deck-pick.active { border-color: var(--accent-blue); background: #eaf2ff; color: var(--accent-blue); }
+
+  /* Dummy revealed (Nord = mort) — face up, sorted by suit, strongest first */
+  .dummy-suit-stack {
+    display: inline-flex; flex-direction: column; align-items: center;
+    margin: 0 2px;
+  }
+  .dummy-rank {
+    width: 18px; height: 22px; border-radius: 3px;
+    background: white; border: 1px solid #d6dde8;
+    display: flex; align-items: center; justify-content: center;
+    font: 700 11px 'Fredoka', sans-serif;
+    margin-top: -12px;
+    box-shadow: 0 1px 2px rgba(31, 58, 95, 0.08);
+  }
+  .dummy-rank:first-child { margin-top: 0; }
+  .dummy-rank[data-suit="red"]    { color: var(--suit-red); }
+  .dummy-rank[data-suit="blue"]   { color: var(--suit-blue); }
+  .dummy-rank[data-suit="green"]  { color: var(--suit-green); }
+  .dummy-rank[data-suit="yellow"] { color: var(--suit-yellow); }
+  .dummy-rank.played {
+    opacity: 0.25;
+    text-decoration: line-through;
+  }
+
+  /* End-of-deal recap diagram (4 hands shown classic bridge layout) */
+  .recap {
+    margin: 14px 24px 8px;
+    padding: 14px;
+    background: #f5f8ff;
+    border-radius: var(--radius-card);
+  }
+  .recap-title {
+    text-align: center; font: 700 13px 'Quicksand', sans-serif;
+    color: var(--ink-soft); margin: 0 0 10px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .recap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 6px; align-items: center; justify-items: center;
+  }
+  .recap-hand { font: 600 11px 'Quicksand', sans-serif; color: var(--ink); text-align: center; }
+  .recap-hand .recap-seat { font-size: 10px; color: var(--ink-soft); margin-bottom: 2px; }
+  .recap-hand .recap-row { white-space: nowrap; }
+  .recap-hand .recap-row .pip-mini {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    vertical-align: middle; margin-right: 4px;
+  }
+  .recap-hand .recap-row[data-suit="red"]    .pip-mini { background: var(--suit-red); }
+  .recap-hand .recap-row[data-suit="blue"]   .pip-mini { background: var(--suit-blue); }
+  .recap-hand .recap-row[data-suit="green"]  .pip-mini { background: var(--suit-green); }
+  .recap-hand .recap-row[data-suit="yellow"] .pip-mini { background: var(--suit-yellow); }
+  .recap-N { grid-column: 2; grid-row: 1; }
+  .recap-W { grid-column: 1; grid-row: 2; }
+  .recap-E { grid-column: 3; grid-row: 2; }
+  .recap-S { grid-column: 2; grid-row: 3; }
+
+  .optimum {
+    margin: 6px 24px 0;
+    padding: 10px 14px;
+    background: #fff7eb;
+    border: 1px solid #ffd4a3;
+    border-radius: 14px;
+    font: 500 13px 'Quicksand', sans-serif;
+    color: var(--ink);
+    text-align: center;
+  }
+  .optimum strong { color: var(--brand-orange); }
+  .optimum.calculating { color: var(--ink-soft); font-style: italic; }
 </style>
 </head>
 <body>
@@ -463,12 +533,17 @@
         <div class="star"></div>
         <div class="star"></div>
       </div>
-      <h1 class="head-line">Bravo !<br/>Ton premier pli !</h1>
+<h1 class="head-line">Bravo !<br/>Ton premier pli !</h1>
       <p class="sub-line" id="win-summary">Tu as gagné le pli avec ta carte la plus forte.</p>
     </div>
+    <div class="recap" id="recap-win" style="display:none;">
+      <p class="recap-title">Les 4 jeux de la donne</p>
+      <div class="recap-grid" id="recap-grid-win"></div>
+    </div>
+    <div class="optimum" id="optimum-win" style="display:none;"></div>
     <div class="ctas">
-      <button class="btn btn-primary" id="btn-continue">Continue</button>
-      <button class="btn btn-secondary" id="btn-replay">Démo</button>
+      <button class="btn btn-primary" id="btn-continue">Nouvelle donne</button>
+      <button class="btn btn-secondary" id="btn-replay">Retour menu</button>
     </div>
   </div>
 
@@ -491,6 +566,11 @@
       <h1 class="head-line">Pas grave !<br/>On retente ?</h1>
       <p class="sub-line" id="loss-summary">Le pli a été pris par l'adversaire. La règle&nbsp;: la carte la plus forte de la couleur demandée gagne.</p>
     </div>
+    <div class="recap" id="recap-loss" style="display:none;">
+      <p class="recap-title">Les 4 jeux de la donne</p>
+      <div class="recap-grid" id="recap-grid-loss"></div>
+    </div>
+    <div class="optimum" id="optimum-loss" style="display:none;"></div>
     <div class="ctas">
       <button class="btn btn-primary" id="btn-retry">Rejouer</button>
       <button class="btn btn-secondary" id="btn-back-home">Retour</button>
@@ -579,10 +659,15 @@ function removeCard(hand, card) {
 function startDeal({ deckSize, dealer, rng }) {
   const hands = dealCards(shuffle(buildDeck(deckSize), rng), dealer);
   const dummy = nextSeat(dealer);
+  // Snapshot initial hands so we can show the recap diagram at the end of the deal.
+  const initialHands = {
+    N: [...hands.N], E: [...hands.E], S: [...hands.S], W: [...hands.W],
+  };
   return {
     deckSize,
     cardsPerHand: deckSize / 4,
     hands,
+    initialHands,
     dealer,
     declarer: dealer,
     dummy,
@@ -716,14 +801,54 @@ function showToast(msg, ms = 1400) {
 }
 
 function render() {
-  // Hand backs (N, E, W) — show count of cards, face-down
-  for (const seat of ['N', 'E', 'W']) {
+  // Defenders (E, W) — face-down stack, count = remaining cards
+  for (const seat of ['E', 'W']) {
     const el = document.getElementById('hand-' + seat);
     el.innerHTML = '';
     for (let i = 0; i < state.hands[seat].length; i++) {
       const back = document.createElement('div');
       back.className = 'card-back';
       el.appendChild(back);
+    }
+  }
+
+  // Nord = mort. Cards stay face-down during the opening lead, then are revealed
+  // (Petit Bridge / classic bridge rule). We show the INITIAL hand sorted by suit
+  // (strongest first, top), and grey out cards that have already been played.
+  const nEl = document.getElementById('hand-N');
+  nEl.innerHTML = '';
+  const dummyRevealed = state.phase !== 'opening' && state.initialHands;
+  if (!dummyRevealed) {
+    for (let i = 0; i < state.hands.N.length; i++) {
+      const back = document.createElement('div');
+      back.className = 'card-back';
+      nEl.appendChild(back);
+    }
+  } else {
+    nEl.className = 'dummy-hand';
+    var bySuit = { red: [], blue: [], green: [], yellow: [] };
+    for (var i = 0; i < state.initialHands.N.length; i++) {
+      var c = state.initialHands.N[i];
+      bySuit[c.suit].push(c);
+    }
+    var stillInHand = new Set(state.hands.N.map(cardId));
+    var suitOrder = ['red', 'yellow', 'green', 'blue'];
+    for (var si = 0; si < suitOrder.length; si++) {
+      var suit = suitOrder[si];
+      if (bySuit[suit].length === 0) continue;
+      var stack = document.createElement('div');
+      stack.className = 'dummy-suit-stack';
+      // Sort: strongest at the top (visually first because flex column top-to-bottom)
+      bySuit[suit].sort(function(a, b) { return b.rank - a.rank; });
+      for (var k = 0; k < bySuit[suit].length; k++) {
+        var card = bySuit[suit][k];
+        var rEl = document.createElement('div');
+        rEl.className = 'dummy-rank' + (stillInHand.has(cardId(card)) ? '' : ' played');
+        rEl.dataset.suit = suit;
+        rEl.textContent = card.rank;
+        stack.appendChild(rEl);
+      }
+      nEl.appendChild(stack);
     }
   }
 
@@ -868,6 +993,134 @@ function showDealEndScreen() {
   }
 }
 
+function renderRecapDiagram(gridEl) {
+  if (!state.initialHands) return;
+  gridEl.innerHTML = '';
+  var seatLabel = { N: 'Nord (mort)', E: 'Est', S: 'Toi (Sud)', W: 'Ouest' };
+  var seats = ['N', 'W', 'E', 'S'];
+  for (var i = 0; i < seats.length; i++) {
+    var seat = seats[i];
+    var hand = state.initialHands[seat];
+    var bySuit = { red: [], blue: [], green: [], yellow: [] };
+    for (var j = 0; j < hand.length; j++) bySuit[hand[j].suit].push(hand[j].rank);
+    for (var s in bySuit) bySuit[s].sort(function(a,b){return b-a;});
+    var box = document.createElement('div');
+    box.className = 'recap-hand recap-' + seat;
+    var html = '<div class="recap-seat">' + seatLabel[seat] + '</div>';
+    var suitOrder = ['red', 'yellow', 'green', 'blue'];
+    for (var k = 0; k < suitOrder.length; k++) {
+      var suit = suitOrder[k];
+      if (bySuit[suit].length === 0) continue;
+      html += '<div class="recap-row" data-suit="' + suit + '"><span class="pip-mini"></span>' + bySuit[suit].join(' ') + '</div>';
+    }
+    box.innerHTML = html;
+    gridEl.appendChild(box);
+  }
+}
+
+/* =========================================================================
+   Double-dummy solver — minimax with memoization.
+   Returns { NS: number, EW: number } : optimal tricks each side can guarantee
+   from the start of the deal, given perfect information and perfect play.
+   ========================================================================= */
+function solveDoubleDummy(deal, timeoutMs) {
+  var deadline = Date.now() + (timeoutMs || 4000);
+  var memo = new Map();
+  var aborted = false;
+
+  function handKey(hand) {
+    // Sort by suit then rank desc, encode compactly. Equivalence reduction:
+    // consecutive ranks could collapse but we keep simple here.
+    var sorted = hand.slice().sort(function(a,b){
+      if (a.suit !== b.suit) return a.suit < b.suit ? -1 : 1;
+      return b.rank - a.rank;
+    });
+    return sorted.map(function(c){ return c.suit[0] + c.rank; }).join('');
+  }
+
+  function stateKey(hands, leadSuit, plays, leader) {
+    var k = handKey(hands.N) + '|' + handKey(hands.E) + '|' +
+            handKey(hands.S) + '|' + handKey(hands.W) +
+            '#' + (leadSuit||'-') + ':' + leader + ':' +
+            plays.map(function(p){return p.seat+p.card.suit[0]+p.card.rank;}).join(',');
+    return k;
+  }
+
+  // Recursive solver: returns NS tricks remaining from here.
+  function solve(hands, plays, leader, leadSuit, nextSeatToPlay) {
+    if (Date.now() > deadline) { aborted = true; return 0; }
+    var totalLeft = hands.N.length + hands.E.length + hands.S.length + hands.W.length;
+    if (totalLeft === 0) return 0;
+    var k = stateKey(hands, leadSuit, plays, leader);
+    if (memo.has(k)) return memo.get(k);
+
+    var hand = hands[nextSeatToPlay];
+    var cands = legalPlays(hand, leadSuit);
+    var maximizing = teamOf(nextSeatToPlay) === 'NS';
+    var best = maximizing ? -1 : 1e9;
+
+    for (var i = 0; i < cands.length; i++) {
+      if (aborted) break;
+      var card = cands[i];
+      var newPlays = plays.concat([{ seat: nextSeatToPlay, card: card }]);
+      var newHands = {
+        N: hands.N, E: hands.E, S: hands.S, W: hands.W,
+      };
+      newHands[nextSeatToPlay] = removeCard(hand, card);
+      var newLeadSuit = plays.length === 0 ? card.suit : leadSuit;
+      var nsAdd = 0;
+      if (newPlays.length === 4) {
+        var winner = resolveTrickWinner(newPlays);
+        nsAdd = teamOf(winner) === 'NS' ? 1 : 0;
+        var rest = solve(newHands, [], winner, null, winner);
+        var total = nsAdd + rest;
+        if (maximizing ? total > best : total < best) best = total;
+      } else {
+        var nextSeatVal = nextSeat(nextSeatToPlay);
+        var sub = solve(newHands, newPlays, leader, newLeadSuit, nextSeatVal);
+        if (maximizing ? sub > best : sub < best) best = sub;
+      }
+    }
+
+    memo.set(k, best);
+    return best;
+  }
+
+  var nsOptimal = solve(deal.initialHands, [], deal.dealer, null, deal.dealer);
+  if (aborted) return null;
+  var total = deal.cardsPerHand;
+  return { NS: nsOptimal, EW: total - nsOptimal, total: total, nodes: memo.size };
+}
+
+function showOptimumLine(out, optEl) {
+  if (!state.initialHands) { optEl.style.display = 'none'; return; }
+  optEl.style.display = 'block';
+  optEl.classList.add('calculating');
+  optEl.innerHTML = 'Calcul de l\'optimum…';
+  // Defer with timeout(0) so the screen renders first
+  setTimeout(function () {
+    try {
+      var ddTimeout = state.deckSize <= 24 ? 4000 : 8000;
+      var dd = solveDoubleDummy(state, ddTimeout);
+      optEl.classList.remove('calculating');
+      if (dd === null) {
+        optEl.innerHTML = 'Optimum non calculé (donne trop grande pour ce moteur).';
+      } else {
+        var actualNS = out.tricksNS;
+        var diff = dd.NS - actualNS;
+        var verdict;
+        if (diff === 0) verdict = "<strong>Parfait :</strong> tu as fait le maximum possible (" + dd.NS + " levées).";
+        else if (diff > 0) verdict = "<strong>Optimum :</strong> ton équipe pouvait prendre <strong>" + dd.NS + "</strong> levées (tu en as fait " + actualNS + ", soit " + diff + " de moins).";
+        else verdict = "<strong>Mieux que l'optimum théorique ?!</strong> NS=" + actualNS + " vs DD=" + dd.NS + " — bug à investiguer.";
+        optEl.innerHTML = verdict + "<br/><span style=\"font-size:11px;color:var(--ink-soft)\">(adversaires optimum : " + dd.EW + " levées)</span>";
+      }
+    } catch (e) {
+      optEl.classList.remove('calculating');
+      optEl.innerHTML = 'Optimum non disponible : ' + e.message;
+    }
+  }, 50);
+}
+
 function showWinScreen(out) {
   document.getElementById('win-summary').textContent = describeDealOutcome(out);
   // Adapt heading based on whether the first trick was won
@@ -879,16 +1132,25 @@ function showWinScreen(out) {
       ? 'Bravo !<br/>Donne gagnée !'
       : 'Bien joué !<br/>Donne remportée !';
   }
+  // Recap diagram + optimum
+  var recap = document.getElementById('recap-win');
+  recap.style.display = 'block';
+  renderRecapDiagram(document.getElementById('recap-grid-win'));
   showScreen('win');
   if (window.confetti) {
     confetti({ particleCount: 90, spread: 75, origin: { y: 0.4 }, colors: ['#ff6b3d', '#4a90ff', '#7bc96f', '#ffc83d', '#ff8db3'] });
     setTimeout(function(){ confetti({ particleCount: 60, spread: 100, angle: 60, origin: { x: 0, y: 0.5 } }); }, 220);
     setTimeout(function(){ confetti({ particleCount: 60, spread: 100, angle: 120, origin: { x: 1, y: 0.5 } }); }, 380);
   }
+  showOptimumLine(out, document.getElementById('optimum-win'));
 }
 function showLossScreen(out) {
   document.getElementById('loss-summary').textContent = describeDealOutcome(out);
+  var recap = document.getElementById('recap-loss');
+  recap.style.display = 'block';
+  renderRecapDiagram(document.getElementById('recap-grid-loss'));
   showScreen('loss');
+  showOptimumLine(out, document.getElementById('optimum-loss'));
 }
 
 // Boot — start screen visible by default.
