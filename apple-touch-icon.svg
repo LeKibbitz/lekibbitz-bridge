@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Lekibbitz Bridge">
+  <!-- Apple touch icon: bigger, with brand wordmark for the home screen tile -->
+  <rect width="180" height="180" rx="38" fill="#1f3a5f"/>
+  <!-- Four families top -->
+  <circle cx="58"  cy="62" r="22" fill="#ff6b6b"/>
+  <circle cx="122" cy="62" r="22" fill="#ffc83d"/>
+  <circle cx="58"  cy="118" r="22" fill="#7bc96f"/>
+  <circle cx="122" cy="118" r="22" fill="#4a90ff"/>
+  <!-- Subtle highlight -->
+  <rect x="6" y="6" width="168" height="168" rx="34" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+</svg>
